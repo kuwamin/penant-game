@@ -463,10 +463,11 @@ def simulate_season_with_ids():
     from player import Player
     from team import Team
 
-    teamA_ids = request.args.get('teamA_ids', '').split(',')
-    teamB_ids = request.args.get('teamB_ids', '').split(',')
-    pitcherA_id = request.args.get('pitcherA_id')
-    pitcherB_id = request.args.get('pitcherB_id')
+    # 🔧 ここを修正（str → int）
+    teamA_ids = list(map(int, request.args.get('teamA_ids', '').split(',')))
+    teamB_ids = list(map(int, request.args.get('teamB_ids', '').split(',')))
+    pitcherA_id = int(request.args.get('pitcherA_id'))
+    pitcherB_id = int(request.args.get('pitcherB_id'))
 
     teamA_models = PlayerModel.query.filter(PlayerModel.id.in_(teamA_ids)).all()
     teamB_models = PlayerModel.query.filter(PlayerModel.id.in_(teamB_ids)).all()
@@ -475,7 +476,6 @@ def simulate_season_with_ids():
 
     for _ in range(143):
         pitcherA = Player(
-            id=pitcherA_model.id,
             name=pitcherA_model.name,
             position="投手",
             is_pitcher=True,
@@ -487,7 +487,6 @@ def simulate_season_with_ids():
             }
         )
         pitcherB = Player(
-            id=pitcherB_model.id,
             name=pitcherB_model.name,
             position="投手",
             is_pitcher=True,
@@ -504,7 +503,6 @@ def simulate_season_with_ids():
         a_objs = []
         for p in teamA_models:
             player = Player(
-                id=p.id,
                 name=p.name,
                 position="野手",
                 is_pitcher=False,
@@ -517,6 +515,7 @@ def simulate_season_with_ids():
                     "catch": p.catch
                 }
             )
+            player.id = p.id
             teamA.add_player(player)
             a_objs.append(player)
         teamA.set_lineup_and_defense(a_objs, dh_player=a_objs[-1])
@@ -526,7 +525,6 @@ def simulate_season_with_ids():
         b_objs = []
         for p in teamB_models:
             player = Player(
-                id=p.id,
                 name=p.name,
                 position="野手",
                 is_pitcher=False,
@@ -539,6 +537,7 @@ def simulate_season_with_ids():
                     "catch": p.catch
                 }
             )
+            player.id = p.id
             teamB.add_player(player)
             b_objs.append(player)
         teamB.set_lineup_and_defense(b_objs, dh_player=b_objs[-1])
