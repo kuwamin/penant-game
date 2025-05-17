@@ -3,6 +3,9 @@ from flask import Flask
 from db import db
 from models import PlayerModel
 
+db.drop_all()
+db.create_all()
+
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False

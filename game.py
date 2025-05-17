@@ -136,7 +136,7 @@ class Game:
         defense_score = sum(p.defense for p in defenders) / len(defenders) if defenders else 50
 
         # ヒット確率の構成要素
-        base_hit_prob = 0.0016 * batter.contact + 0.132
+        base_hit_prob = 0.002 * batter.contact + 0.17
         breaking_penalty = (pitcher.breaking_ball - 6) * 0.01
         speed_penalty = abs(pitcher.pitch_speed - 145) * 0.002
         defense_penalty = (defense_score - 50) * 0.002
@@ -149,9 +149,19 @@ class Game:
         if random.random() < final_hit_prob:
             # ヒットした場合：長打 or ホームランを再抽選
             power = batter.power
+
             long_hit_chance = 0.1 + (power - 50) * 0.005  # パワー50で10%、パワー70で20%
             home_run_chance = 0.05 + (power - 80) * 0.01  # パワー80で5%、パワー90で15%
 
+            # 弾道による補正（trajectory: 1〜4）
+            trajectory = getattr(batter, 'trajectory', 2)  # 無ければ2
+
+            trajectory_bonus_hr = (trajectory - 2) * 0.015  # 弾道3で+0.015、4で+0.03
+            trajectory_bonus_ld = (trajectory - 2) * 0.02   # 弾道3で+0.02、4で+0.04
+
+            home_run_chance += trajectory_bonus_hr
+            long_hit_chance += trajectory_bonus_ld
+            
             long_hit_chance = max(0.0, min(long_hit_chance, 1.0))
             home_run_chance = max(0.0, min(home_run_chance, 1.0))
 
