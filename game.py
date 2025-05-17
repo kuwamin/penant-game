@@ -219,7 +219,13 @@ class Game:
             hbp_chance = max(0.01, 0.06 - control * 0.001)
             bb_chance = max(0.01, 0.05 + (100 - control) * 0.002 + power * 0.001)
             so_chance = max(0.05, 0.10 + (100 - contact) * 0.001 + control * 0.001)
-            sac_bunt_chance = 0.02 if speed > 70 else 0.005
+            # ランナーがいる場合のみ犠打を考慮（1, 2, 3塁どれかに走者がいる）
+            has_runner = any(self.current_bases)
+            # アウトが2アウト未満で、走者がいれば犠打のチャンスあり（弱打者がやりやすい）
+            if has_runner and self.current_outs < 2:
+                sac_bunt_chance = 0.02 if speed > 70 else 0.005
+            else:
+                sac_bunt_chance = 0.0
             sac_fly_chance = 0.015 + trajectory * 0.005
 
             base_hit_prob = 0.002 * contact + 0.17
