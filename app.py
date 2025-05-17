@@ -341,60 +341,107 @@ def register_pitcher():
 
 @app.route('/simulate_season', methods=['POST'])
 def simulate_season():
-    from game import Game  # 念のため再import
-    players = PlayerModel.query.all()
-    teamA_players = [p for p in players if "中村" in p.name]
-    teamB_players = [p for p in players if "グリエル" in p.name]
+    from game import Game
+    from player import Player
+    from team import Team
+
+    all_players = PlayerModel.query.all()
+    teamA_players = [p for p in all_players if "中村" in p.name and not p.is_pitcher][:9]
+    teamB_players = [p for p in all_players if "グリエル" in p.name and not p.is_pitcher][:9]
 
     pitcherA_model = PlayerModel.query.filter(PlayerModel.name == "強").first()
     pitcherB_model = PlayerModel.query.filter(PlayerModel.name == "最弱").first()
 
-    for _ in range(143):
-        # インスタンス化
-        pitcherA = Player(name=pitcherA_model.name, position="投手", is_pitcher=True, stats={
-    "pitch_speed": pitcherA_model.pitch_speed,
-    "control": pitcherA_model.control,
-    "stamina": pitcherA_model.stamina,
-    "breaking_ball": pitcherA_model.breaking_ball
-        })
-        pitcherB = Player(name=pitcherB_model.name, position="投手", is_pitcher=True, stats={
-    "pitch_speed": pitcherB_model.pitch_speed,
-    "control": pitcherB_model.control,
-    "stamina": pitcherB_model.stamina,
-    "breaking_ball": pitcherB_model.breaking_ball
-        })
+    if not pitcherA_model or not pitcherB_model or len(teamA_players) < 9 or len(teamB_players) < 9:
+        return "選手が不足しています。中村・グリエル9人ずつ＋投手を準備してください。"
 
+    for _ in range(143):
+        # 投手インスタンス化
+        pitcherA = Player(
+            name=pitcherA_model.name,
+            position="投手",
+            is_pitcher=True,
+            stats={
+                "pitch_speed": pitcherA_model.pitch_speed,
+                "control": pitcherA_model.control,
+                "stamina": pitcherA_model.stamina,
+                "breaking_ball": pitcherA_model.breaking_ball
+            }
+        )
+        pitcherB = Player(
+            name=pitcherB_model.name,
+            position="投手",
+            is_pitcher=True,
+            stats={
+                "pitch_speed": pitcherB_model.pitch_speed,
+                "control": pitcherB_model.control,
+                "stamina": pitcherB_model.stamina,
+                "breaking_ball": pitcherB_model.breaking_ball
+            }
+        )
+
+        # チームA構築
         teamA = Team("中村チーム")
         teamA.add_player(pitcherA)
+        a_player_objs = []
         for p in teamA_players:
-            teamA.add_player(Player(...))
+            player = Player(
+                name=p.name,
+                position="野手",
+                is_pitcher=False,
+                stats={
+                    "contact": p.contact,
+                    "power": p.power,
+                    "speed": p.speed,
+                    "arm": p.arm,
+                    "defense": p.defense,
+                    "catch": p.catch
+                }
+            )
+            player.id = p.id  # DBとリンクするため
+            teamA.add_player(player)
+            a_player_objs.append(player)
+        teamA.set_lineup_and_defense(a_player_objs, dh_player=a_player_objs[-1])
 
-        teamA.set_lineup_and_defense([...])
-
+        # チームB構築
         teamB = Team("グリエルチーム")
         teamB.add_player(pitcherB)
+        b_player_objs = []
         for p in teamB_players:
-            teamB.add_player(Player(...))
+            player = Player(
+                name=p.name,
+                position="野手",
+                is_pitcher=False,
+                stats={
+                    "contact": p.contact,
+                    "power": p.power,
+                    "speed": p.speed,
+                    "arm": p.arm,
+                    "defense": p.defense,
+                    "catch": p.catch
+                }
+            )
+            player.id = p.id  # DBとリンクするため
+            teamB.add_player(player)
+            b_player_objs.append(player)
+        teamB.set_lineup_and_defense(b_player_objs, dh_player=b_player_objs[-1])
 
-        teamB.set_lineup_and_defense([...])
-
+        # 試合実行
         game = Game(team_home=teamA, team_away=teamB)
         game.play_game()
 
-        # 成績集計（例：打者のみ）
-        for player in teamA.players + teamB.players:
-            if player.is_pitcher:
-                continue
-            stat = SeasonStatModel.query.filter_by(player_id=player.id).first()
+        # 成績集計
+        for p in a_player_objs + b_player_objs:
+            stat = SeasonStatModel.query.filter_by(player_id=p.id).first()
             if not stat:
-                stat = SeasonStatModel(player_id=player.id)
+                stat = SeasonStatModel(player_id=p.id)
                 db.session.add(stat)
 
-            stat.at_bats += player.at_bats
-            stat.hits += player.hits
-            stat.walks += player.walks
-            stat.strikeouts += player.strikeouts
-            stat.home_runs += player.home_runs
+            stat.at_bats += getattr(p, "at_bats", 0)
+            stat.hits += getattr(p, "hits", 0)
+            stat.walks += getattr(p, "walks", 0)
+            stat.strikeouts += getattr(p, "strikeouts", 0)
+            stat.home_runs += getattr(p, "home_runs", 0)
 
     db.session.commit()
     return "143試合を完了し、成績を保存しました！"
