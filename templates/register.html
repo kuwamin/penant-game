@@ -6,24 +6,21 @@
 </head>
 <body>
     <h1>選手登録</h1>
-    <form action="/register" method="post">
-        {% for i in range(1, 10) %}
-        <fieldset style="margin-bottom: 15px;">
-            <legend>選手{{ i }}</legend>
-            名前: <input type="text" name="player{{ i }}_name" required><br>
-            ミート: <input type="number" name="player{{ i }}_contact" min="0" max="100" required><br>
-            パワー: <input type="number" name="player{{ i }}_power" min="0" max="100" required><br>
-            走力: <input type="number" name="player{{ i }}_speed" min="0" max="100" required><br>
-            肩力: <input type="number" name="player{{ i }}_arm" min="0" max="100" required><br>
-            守備力: <input type="number" name="player{{ i }}_defense" min="0" max="100" required><br>
-            捕球: <input type="number" name="player{{ i }}_catch" min="0" max="100" required><br>
-        </fieldset>
-        {% endfor %}
-        <button type="submit">登録</button>
+    {% if message %}
+        <p style="color:red;">{{ message }}</p>
+    {% endif %}
+
+    <form method="post">
+        <label>名前: <input type="text" name="name" required></label><br>
+        <label>ミート: <input type="number" name="contact" required></label><br>
+        <label>パワー: <input type="number" name="power" required></label><br>
+        <label>走力: <input type="number" name="speed" required></label><br>
+        <label>肩力: <input type="number" name="arm" required></label><br>
+        <label>守備力: <input type="number" name="defense" required></label><br>
+        <label>捕球: <input type="number" name="catch" required></label><br><br>
+        <input type="submit" value="登録">
     </form>
 
-    {% if message %}
-    <script>alert("{{ message }}");</script>
-    {% endif %}
+    <p><a href="{{ url_for('index') }}">トップページに戻る</a></p>
 </body>
 </html>

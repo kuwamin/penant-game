@@ -30,38 +30,30 @@ def index():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        messages = []
-        for i in range(1, 10):
-            name = request.form.get(f'player{i}_name')
-            contact = int(request.form.get(f'player{i}_contact'))
-            power = int(request.form.get(f'player{i}_power'))
-            speed = int(request.form.get(f'player{i}_speed'))
-            arm = int(request.form.get(f'player{i}_arm'))
-            defense = int(request.form.get(f'player{i}_defense'))
-            catch = int(request.form.get(f'player{i}_catch'))
+        name = request.form.get('name')
+        contact = int(request.form.get('contact'))
+        power = int(request.form.get('power'))
+        speed = int(request.form.get('speed'))
+        arm = int(request.form.get('arm'))
+        defense = int(request.form.get('defense'))
+        catch = int(request.form.get('catch'))
 
-            # 重複チェック
-            existing = PlayerModel.query.filter_by(name=name).first()
-            if existing:
-                messages.append(f"{name} はすでに登録されています。")
-                continue
+        existing = PlayerModel.query.filter_by(name=name).first()
+        if existing:
+            return render_template("register.html", message=f"{name} はすでに登録されています。")
 
-            player = PlayerModel(
-                name=name,
-                contact=contact,
-                power=power,
-                speed=speed,
-                arm=arm,
-                defense=defense,
-                catch=catch
-            )
-            db.session.add(player)
-        
-        if messages:
-            return render_template("register.html", message="\\n".join(messages))
-        
+        player = PlayerModel(
+            name=name,
+            contact=contact,
+            power=power,
+            speed=speed,
+            arm=arm,
+            defense=defense,
+            catch=catch
+        )
+        db.session.add(player)
         db.session.commit()
-        return render_template("register.html", message="登録完了しました。")
+        return render_template("register.html", message=f"{name} を登録しました！")
 
     return render_template("register.html")
 
