@@ -243,19 +243,19 @@ class Game:
 
             p = random.random()
             if p < hbp_chance:
-                return "死球", round(final_hit_prob, 3)
+                return "死球", round(final_hit_prob, 3), ""
             p -= hbp_chance
             if p < bb_chance:
-                return "四球", round(final_hit_prob, 3)
+                return "四球", round(final_hit_prob, 3), ""
             p -= bb_chance
             if p < so_chance:
-                return "三振", round(final_hit_prob, 3)
+                return "三振", round(final_hit_prob, 3), ""
             p -= so_chance
             if p < sac_bunt_chance:
-                return "犠打", round(final_hit_prob, 3)
+                return "犠打", round(final_hit_prob, 3), ""
             p -= sac_bunt_chance
             if p < sac_fly_chance:
-                return "犠飛", round(final_hit_prob, 3)
+                return "犠飛", round(final_hit_prob, 3), ""
             p -= sac_fly_chance
 
             if random.random() < final_hit_prob:
