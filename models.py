@@ -19,3 +19,15 @@ class PlayerModel(db.Model):
     stamina = db.Column(db.Integer)
     breaking_ball = db.Column(db.Integer)
 
+class SeasonStatModel(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey('player_model.id'), nullable=False)
+    season = db.Column(db.Integer, default=2025)
+
+    at_bats = db.Column(db.Integer, default=0)
+    hits = db.Column(db.Integer, default=0)
+    home_runs = db.Column(db.Integer, default=0)
+    walks = db.Column(db.Integer, default=0)
+    strikeouts = db.Column(db.Integer, default=0)
+
+    player = db.relationship('PlayerModel', backref='season_stats')

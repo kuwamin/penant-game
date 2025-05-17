@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask import request, redirect, url_for, render_template
 from models import PlayerModel
+from models import SeasonStatModel
 from db import db
 from game import Game
 from team import Team
@@ -338,7 +339,55 @@ def register_pitcher():
 
     return render_template("register_pitcher.html")
 
+@app.route('/simulate_season', methods=['POST'])
+def simulate_season():
+    from game import Game  # 念のため再import
+    players = PlayerModel.query.all()
+    teamA_players = [p for p in players if "中村" in p.name]
+    teamB_players = [p for p in players if "グリエル" in p.name]
 
+    pitcherA_model = PlayerModel.query.filter(PlayerModel.name == "強").first()
+    pitcherB_model = PlayerModel.query.filter(PlayerModel.name == "最弱").first()
+
+    for _ in range(143):
+        # インスタンス化
+        pitcherA = Player(name=pitcherA_model.name, position="投手", is_pitcher=True, stats={...})
+        pitcherB = Player(name=pitcherB_model.name, position="投手", is_pitcher=True, stats={...})
+
+        teamA = Team("中村チーム")
+        teamA.add_player(pitcherA)
+        for p in teamA_players:
+            teamA.add_player(Player(...))
+
+        teamA.set_lineup_and_defense([...])
+
+        teamB = Team("グリエルチーム")
+        teamB.add_player(pitcherB)
+        for p in teamB_players:
+            teamB.add_player(Player(...))
+
+        teamB.set_lineup_and_defense([...])
+
+        game = Game(team_home=teamA, team_away=teamB)
+        game.play_game()
+
+        # 成績集計（例：打者のみ）
+        for player in teamA.players + teamB.players:
+            if player.is_pitcher:
+                continue
+            stat = SeasonStatModel.query.filter_by(player_id=player.id).first()
+            if not stat:
+                stat = SeasonStatModel(player_id=player.id)
+                db.session.add(stat)
+
+            stat.at_bats += player.at_bats
+            stat.hits += player.hits
+            stat.walks += player.walks
+            stat.strikeouts += player.strikeouts
+            stat.home_runs += player.home_runs
+
+    db.session.commit()
+    return "143試合を完了し、成績を保存しました！"
 
 if __name__ == '__main__':
     import os
