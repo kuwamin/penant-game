@@ -81,8 +81,8 @@ class Game:
                 batter_index += 1
                 continue
 
-            result = self.at_bat_result(batter, pitcher, defense_team)
-            self.log.append(f"{batter.name} の打席結果：{result}")
+            result, hit_prob = self.at_bat_result(batter, pitcher, defense_team)
+            self.log.append(f"{batter.name} の打席結果：{result}（hit_prob: {hit_prob}）")
 
             if result in ["ヒット", "長打", "ホームラン"]:
                 score += 1
@@ -103,32 +103,27 @@ class Game:
 
 
     def at_bat_result(self, batter: Player, pitcher: Player, defense_team: Team):
-        # 守備力
         defenders = list(defense_team.defense_positions.values())
         defense_score = sum(p.defense for p in defenders) / len(defenders) if defenders else 50
 
-        # ベース打率（ミート基準）
         base_hit_prob = 0.0016 * batter.contact + 0.132
-
-        # 補正要素
         breaking_penalty = (pitcher.breaking_ball - 6) * 0.01
         speed_penalty = abs(pitcher.pitch_speed - 145) * 0.002
         defense_penalty = (defense_score - 50) * 0.002
         random_factor = random.uniform(-0.05, 0.05)
 
-        # 最終ヒット確率
         final_hit_prob = base_hit_prob - breaking_penalty - speed_penalty - defense_penalty + random_factor
 
-        # 結果判定
         if final_hit_prob > 0.9:
-            return "ホームラン"
+            result = "ホームラン"
         elif final_hit_prob > 0.6:
-            return "長打"
+            result = "長打"
         elif final_hit_prob > 0.3:
-            return "ヒット"
+            result = "ヒット"
         else:
-            return "アウト"
+            result = "アウト"
 
+        return result, round(final_hit_prob, 3)
 
     def get_winner(self):
         if self.score_home > self.score_away:
