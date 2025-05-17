@@ -437,11 +437,12 @@ def simulate_season():
                 stat = SeasonStatModel(player_id=p.id)
                 db.session.add(stat)
 
-            stat.at_bats += getattr(p, "at_bats", 0)
-            stat.hits += getattr(p, "hits", 0)
-            stat.walks += getattr(p, "walks", 0)
-            stat.strikeouts += getattr(p, "strikeouts", 0)
-            stat.home_runs += getattr(p, "home_runs", 0)
+            stat.at_bats     += getattr(p, "at_bats", 0) or 0
+            stat.hits        += getattr(p, "hits", 0) or 0
+            stat.walks       += getattr(p, "walks", 0) or 0
+            stat.strikeouts  += getattr(p, "strikeouts", 0) or 0
+            stat.home_runs   += getattr(p, "home_runs", 0) or 0
+
 
     db.session.commit()
     return "143試合を完了し、成績を保存しました！"
