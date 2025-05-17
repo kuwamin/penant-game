@@ -90,19 +90,21 @@ class Game:
             situation = f"【{outs}アウト {base_display}塁】"
 
             result, hit_prob = self.at_bat_result(batter, pitcher, defense_team)
-            log_line = f"{situation}{batter.name} の打席結果：{result}（hit_prob: {hit_prob}）"
 
+            # 方向付けを行うが、ログ表示だけに使う
+            direction = ""
             if result in ["ゴロ", "飛", "直", "ヒット", "2塁打", "3塁打", "本塁打"]:
                 direction = Game.decide_hit_direction(result, batter)
-                result = f"{direction}{result}"
+
+            log_line = f"{situation}{batter.name} の打席結果：{direction}{result}（hit_prob: {hit_prob}）"
 
             if result in ["三振", "ゴロ", "飛", "直", "フライアウト"]:
                 outs += 1
                 self.current_outs = outs
-
                 batter_index += 1
                 self.log.append(log_line)
                 continue
+
 
             elif result == "四球" or result == "死球":
                 if all(bases):  # 押し出し
