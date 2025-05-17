@@ -134,25 +134,44 @@ def select_lineups():
     if request.method == 'POST':
         teamA_ids = request.form.getlist('teamA_ids')
         teamB_ids = request.form.getlist('teamB_ids')
+        pitcherA_id = request.form.get('pitcherA_id')
 
-        if len(teamA_ids) != 9 or len(teamB_ids) != 9:
-            error = "両チームとも9人ちょうど選んでください。"
+        if len(teamA_ids) != 9 or len(teamB_ids) != 9 or not pitcherA_id:
+            error = "両チームとも9人、かつ投手を1人選んでください。"
             return render_template('select_lineups.html', players=all_players, error=error)
 
-        return redirect(url_for('simulate_with_ids', teamA_ids=','.join(teamA_ids), teamB_ids=','.join(teamB_ids)))
+        return redirect(url_for(
+            'simulate_with_ids',
+            teamA_ids=','.join(teamA_ids),
+            teamB_ids=','.join(teamB_ids),
+            pitcherA_id=pitcherA_id
+        ))
 
     return render_template('select_lineups.html', players=all_players)
+
 
 @app.route('/simulate_with_ids')
 def simulate_with_ids():
     teamA_ids = request.args.get('teamA_ids', '').split(',')
     teamB_ids = request.args.get('teamB_ids', '').split(',')
+    pitcherA_id = request.args.get('pitcherA_id')
 
-    # Team A
     selected_players_A = {str(p.id): p for p in PlayerModel.query.filter(PlayerModel.id.in_(teamA_ids)).all()}
     ordered_players_A = [selected_players_A[pid] for pid in teamA_ids]
+
+    selected_players_B = {str(p.id): p for p in PlayerModel.query.filter(PlayerModel.id.in_(teamB_ids)).all()}
+    ordered_players_B = [selected_players_B[pid] for pid in teamB_ids]
+
+    pitcherA_model = PlayerModel.query.get_or_404(pitcherA_id)
+    pitcherA = Player(name=pitcherA_model.name, position="投手", is_pitcher=True, stats={
+        "pitch_speed": pitcherA_model.pitch_speed,
+        "control": pitcherA_model.control,
+        "stamina": pitcherA_model.stamina,
+        "breaking_ball": pitcherA_model.breaking_ball
+    })
+
+    # チーム構築
     teamA = Team("あなたのチーム")
-    pitcherA = Player("マイチームエース", "投手", is_pitcher=True, stats={"pitch_speed": 145, "control": 70, "stamina": 75, "breaking_ball": 7})
     teamA.add_player(pitcherA)
     for p in ordered_players_A:
         teamA.add_player(Player(name=p.name, position="野手", is_pitcher=False, stats={
@@ -161,11 +180,10 @@ def simulate_with_ids():
         }))
     teamA.set_lineup_and_defense(teamA.players[1:], dh_player=teamA.players[-1])
 
-    # Team B
-    selected_players_B = {str(p.id): p for p in PlayerModel.query.filter(PlayerModel.id.in_(teamB_ids)).all()}
-    ordered_players_B = [selected_players_B[pid] for pid in teamB_ids]
     teamB = Team("相手チーム")
-    pitcherB = Player("相手エース", "投手", is_pitcher=True, stats={"pitch_speed": 150, "control": 60, "stamina": 70, "breaking_ball": 6})
+    pitcherB = Player("相手投手", "投手", is_pitcher=True, stats={
+        "pitch_speed": 150, "control": 60, "stamina": 70, "breaking_ball": 6
+    })
     teamB.add_player(pitcherB)
     for p in ordered_players_B:
         teamB.add_player(Player(name=p.name, position="野手", is_pitcher=False, stats={
@@ -174,7 +192,6 @@ def simulate_with_ids():
         }))
     teamB.set_lineup_and_defense(teamB.players[1:], dh_player=teamB.players[-1])
 
-    # Play game
     game = Game(team_home=teamA, team_away=teamB)
     game.play_game()
 
@@ -191,6 +208,7 @@ def simulate_with_ids():
         "errors_home": 0,
         "errors_away": 0
     }
+
     return render_template("result.html", result=result)
 
 @app.route('/simulate', methods=['POST'])
@@ -257,6 +275,34 @@ def simulate():
     }
 
     return render_template("result.html", result=result)
+
+@app.route('/register_pitcher', methods=['GET', 'POST'])
+def register_pitcher():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        pitch_speed = int(request.form.get('pitch_speed'))
+        control = int(request.form.get('control'))
+        stamina = int(request.form.get('stamina'))
+        breaking_ball = int(request.form.get('breaking_ball'))
+
+        existing = PlayerModel.query.filter_by(name=name).first()
+        if existing:
+            return render_template("pitcher_register.html", message=f"{name} はすでに登録されています。")
+
+        pitcher = PlayerModel(
+            name=name,
+            is_pitcher=True,
+            pitch_speed=pitch_speed,
+            control=control,
+            stamina=stamina,
+            breaking_ball=breaking_ball
+        )
+        db.session.add(pitcher)
+        db.session.commit()
+        return render_template("pitcher_register.html", message=f"{name} を投手として登録しました！")
+
+    return render_template("pitcher_register.html")
+
 
 if __name__ == '__main__':
     import os

@@ -12,3 +12,10 @@ class PlayerModel(db.Model):
     arm = db.Column(db.Integer, nullable=False)
     defense = db.Column(db.Integer, nullable=False)
     catch = db.Column(db.Integer, nullable=False)
+
+    is_pitcher = db.Column(db.Boolean, default=False)
+    pitch_speed = db.Column(db.Integer)
+    control = db.Column(db.Integer)
+    stamina = db.Column(db.Integer)
+    breaking_ball = db.Column(db.Integer)
+

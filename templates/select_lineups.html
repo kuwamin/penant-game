@@ -2,72 +2,40 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>スタメン選択</title>
-    <style>
-        .teams {
-            display: flex;
-            gap: 50px;
-        }
-        table {
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid black;
-            padding: 4px 8px;
-        }
-    </style>
+    <title>スタメン・投手選択</title>
 </head>
 <body>
-    <h1>スタメン（各9人）を選んでください</h1>
+    <h1>スタメン（9人）と先発投手を選んでください</h1>
+
     {% if error %}
         <p style="color:red">{{ error }}</p>
     {% endif %}
-    <form method="POST">
-        <div class="teams">
-            <div>
-                <h2>あなたのチーム</h2>
-                <table>
-                    <tr>
-                        <th>選択</th><th>名前</th><th>ミート</th><th>パワー</th><th>走力</th><th>肩力</th><th>守備力</th><th>捕球</th>
-                    </tr>
-                    {% for player in players %}
-                    <tr>
-                        <td><input type="checkbox" name="teamA_ids" value="{{ player.id }}"></td>
-                        <td>{{ player.name }}</td>
-                        <td>{{ player.contact }}</td>
-                        <td>{{ player.power }}</td>
-                        <td>{{ player.speed }}</td>
-                        <td>{{ player.arm }}</td>
-                        <td>{{ player.defense }}</td>
-                        <td>{{ player.catch }}</td>
-                    </tr>
-                    {% endfor %}
-                </table>
-            </div>
 
-            <div>
-                <h2>相手チーム</h2>
-                <table>
-                    <tr>
-                        <th>選択</th><th>名前</th><th>ミート</th><th>パワー</th><th>走力</th><th>肩力</th><th>守備力</th><th>捕球</th>
-                    </tr>
-                    {% for player in players %}
-                    <tr>
-                        <td><input type="checkbox" name="teamB_ids" value="{{ player.id }}"></td>
-                        <td>{{ player.name }}</td>
-                        <td>{{ player.contact }}</td>
-                        <td>{{ player.power }}</td>
-                        <td>{{ player.speed }}</td>
-                        <td>{{ player.arm }}</td>
-                        <td>{{ player.defense }}</td>
-                        <td>{{ player.catch }}</td>
-                    </tr>
-                    {% endfor %}
-                </table>
-            </div>
-        </div>
+    <form method="POST">
+
+        <h2>あなたのチームのスタメン（9人）</h2>
+        {% for player in players if not player.is_pitcher %}
+            <label><input type="checkbox" name="teamA_ids" value="{{ player.id }}"> {{ player.name }}</label><br>
+        {% endfor %}
+
+        <h2>あなたのチームの投手（1人）</h2>
+        <select name="pitcherA_id" required>
+            <option value="">-- 投手を選択 --</option>
+            {% for player in players if player.is_pitcher %}
+                <option value="{{ player.id }}">{{ player.name }}</option>
+            {% endfor %}
+        </select>
+
+        <hr>
+
+        <h2>相手チームのスタメン（9人）</h2>
+        {% for player in players if not player.is_pitcher %}
+            <label><input type="checkbox" name="teamB_ids" value="{{ player.id }}"> {{ player.name }}</label><br>
+        {% endfor %}
+
         <p><button type="submit">試合開始</button></p>
     </form>
-    <p><a href="{{ url_for('show_players') }}">登録済み選手一覧へ戻る</a></p>
+
+    <p><a href="{{ url_for('index') }}">ホームへ戻る</a></p>
 </body>
 </html>
