@@ -1,10 +1,11 @@
 class Player:
-    def __init__(self, name, position, is_pitcher=False, stats=None, position_role=None):
-        self.id = id  # ← これを追加（DB連携のため）
+    def __init__(self, name, position, is_pitcher=False, stats=None, position_role=None, id=None):
+        self.id = id  # DBとリンクするために必要
         self.name = name
         self.position = position
         self.is_pitcher = is_pitcher
         self.position_role = position_role
+
         # 成績初期化
         self.at_bats = 0
         self.hits = 0
@@ -12,27 +13,24 @@ class Player:
         self.strikeouts = 0
         self.home_runs = 0
 
-        # （略） stats の部分は前回と同様
-
         # 投手能力
         self.pitch_speed = 0
         self.control = 0
         self.stamina = 0
-        self.breaking_ball = 0  # 変化量
+        self.breaking_ball = 0
 
         # 野手能力
-        self.contact = 0  # ミート
+        self.contact = 0
         self.power = 0
-        self.speed = 0  # 走力
-        self.arm = 0    # 肩力
-        self.defense = 0  # 守備力
-        self.catch = 0  # 捕球
+        self.speed = 0
+        self.arm = 0
+        self.defense = 0
+        self.catch = 0
 
         if stats:
             self.set_stats(stats)
 
     def set_stats(self, stats):
-        # stats: 辞書形式で初期値を受け取る
         if self.is_pitcher:
             self.pitch_speed = stats.get('pitch_speed', 0)
             self.control = stats.get('control', 0)
