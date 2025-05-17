@@ -1,9 +1,20 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request
 from game import Game
 from team import Team
 from player import Player
+import random
 
 app = Flask(__name__)
+
+def generate_random_stats():
+    return {
+        "contact": random.randint(50, 90),
+        "power": random.randint(50, 90),
+        "speed": random.randint(50, 90),
+        "arm": random.randint(50, 90),
+        "defense": random.randint(50, 90),
+        "catch": random.randint(50, 90),
+    }
 
 @app.route('/')
 def index():
@@ -11,27 +22,35 @@ def index():
 
 @app.route('/simulate', methods=['POST'])
 def simulate():
-    # チームと選手をハードコード（後にフォーム入力に変更）
-    teamA = Team("Team A")
-    teamB = Team("Team B")
+    # ユーザー入力からチーム作成
+    teamA = Team("あなたのチーム")
+    batters = []
+    for i in range(1, 10):
+        name = request.form.get(f'player{i}')
+        stats = generate_random_stats()
+        player = Player(name=name, position="野手", is_pitcher=False, stats=stats, position_role="不明")
+        teamA.add_player(player)
+        batters.append(player)
 
-    # 投手と野手をそれぞれ登録（仮データ）
-    pitcherA = Player("投手A", "投手", is_pitcher=True, stats={"pitch_speed": 150, "control": 80, "stamina": 85, "breaking_ball": 70})
-    pitcherB = Player("投手B", "投手", is_pitcher=True, stats={"pitch_speed": 148, "control": 75, "stamina": 80, "breaking_ball": 65})
-    teamA.add_player(pitcherA)
+    dh_index = int(request.form.get("dh_index")) - 1
+    dh_player = batters[dh_index]
+    teamA.set_lineup_and_defense(batters, dh_player=dh_player)
+
+    # 自動生成チーム（相手）
+    teamB = Team("COMチーム")
+    pitcherB = Player("エースCOM", "投手", is_pitcher=True, stats={
+        "pitch_speed": 150, "control": 75, "stamina": 80, "breaking_ball": 65
+    })
     teamB.add_player(pitcherB)
+    auto_batters = []
+    for i in range(9):
+        stats = generate_random_stats()
+        p = Player(name=f"COM選手{i+1}", position="野手", is_pitcher=False, stats=stats, position_role="不明")
+        teamB.add_player(p)
+        auto_batters.append(p)
+    teamB.set_lineup_and_defense(auto_batters, dh_player=auto_batters[8])
 
-    batter_stats = {"contact": 80, "power": 70, "speed": 70, "arm": 70, "defense": 70, "catch": 70}
-    battersA = [Player(f"A野手{i}", "野手", stats=batter_stats, position_role="遊撃手") for i in range(9)]
-    battersB = [Player(f"B野手{i}", "野手", stats=batter_stats, position_role="遊撃手") for i in range(9)]
-    for b in battersA:
-        teamA.add_player(b)
-    for b in battersB:
-        teamB.add_player(b)
-
-    teamA.set_lineup_and_defense(battersA, dh_player=battersA[8])
-    teamB.set_lineup_and_defense(battersB, dh_player=battersB[8])
-
+    # 試合実行
     game = Game(team_home=teamA, team_away=teamB)
     game.play_game()
 
@@ -41,10 +60,5 @@ def simulate():
         "scoreA": game.score_home,
         "scoreB": game.score_away
     }
-    return render_template('result.html', result=result)
 
-if __name__ == '__main__':
-    import os
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-
+    return render_template("result.html", result=result)

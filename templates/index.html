@@ -1,11 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-    <title>ペナント試合シミュレーター</title>
+    <meta charset="UTF-8">
+    <title>チーム編成</title>
 </head>
 <body>
-    <h1>ペナント試合シミュレーター</h1>
+    <h1>あなたのチームを編成してください</h1>
     <form action="/simulate" method="post">
+        {% for i in range(1, 10) %}
+            <label>選手{{ i }}の名前: <input type="text" name="player{{ i }}" required></label><br>
+        {% endfor %}
+        <label>DHにする選手の番号（1〜9）: <input type="number" name="dh_index" min="1" max="9" required></label><br><br>
         <button type="submit">試合開始！</button>
     </form>
 </body>
