@@ -21,7 +21,7 @@ class PlayerModel(db.Model):
 
 class SeasonStatModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    player_id = db.Column(db.Integer, db.ForeignKey('player_model.id'), nullable=False)
+    player_id = db.Column(db.Integer, db.ForeignKey('penant_players.id'), nullable=False)
     season = db.Column(db.Integer, default=2025)
 
     at_bats = db.Column(db.Integer, default=0)
