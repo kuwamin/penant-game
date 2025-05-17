@@ -154,7 +154,7 @@ def simulate_with_ids():
             "contact": p.contact, "power": p.power, "speed": p.speed,
             "arm": p.arm, "defense": p.defense, "catch": p.catch
         }))
-    teamA.set_lineup_and_defense(teamA.players[1:], dh_player=teamA.players[-1])
+    teamA.set_lineup_and_defense([p for p in teamA.players if not p.is_pitcher], dh_player=teamA.players[-1])
 
     teamB = Team("相手チーム")
     pitcherB = Player("相手投手", "投手", is_pitcher=True, stats={
@@ -166,7 +166,7 @@ def simulate_with_ids():
             "contact": p.contact, "power": p.power, "speed": p.speed,
             "arm": p.arm, "defense": p.defense, "catch": p.catch
         }))
-    teamB.set_lineup_and_defense(teamB.players[1:], dh_player=teamB.players[-1])
+    teamB.set_lineup_and_defense([p for p in teamB.players if not p.is_pitcher], dh_player=teamB.players[-1])
 
     game = Game(team_home=teamA, team_away=teamB)
     game.play_game()
