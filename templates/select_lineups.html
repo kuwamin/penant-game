@@ -4,74 +4,70 @@
     <meta charset="UTF-8">
     <title>スタメン選択</title>
     <style>
+        .teams {
+            display: flex;
+            gap: 50px;
+        }
         table {
             border-collapse: collapse;
-            margin: 10px;
         }
         th, td {
             border: 1px solid black;
-            padding: 8px;
-        }
-        .team-container {
-            display: flex;
-            justify-content: space-between;
+            padding: 4px 8px;
         }
     </style>
 </head>
 <body>
-    <h1>スタメン選択（9人ずつ）</h1>
-    {% if error %}<p style="color:red">{{ error }}</p>{% endif %}
-
+    <h1>スタメン（各9人）を選んでください</h1>
+    {% if error %}
+        <p style="color:red">{{ error }}</p>
+    {% endif %}
     <form method="POST">
-        <div class="team-container">
-            <!-- あなたのチーム -->
+        <div class="teams">
             <div>
                 <h2>あなたのチーム</h2>
                 <table>
                     <tr>
                         <th>選択</th><th>名前</th><th>ミート</th><th>パワー</th><th>走力</th><th>肩力</th><th>守備力</th><th>捕球</th>
                     </tr>
-                    {% for p in players %}
+                    {% for player in players %}
                     <tr>
-                        <td><input type="checkbox" name="teamA_ids" value="{{ p.id }}"></td>
-                        <td>{{ p.name }}</td>
-                        <td>{{ p.contact }}</td>
-                        <td>{{ p.power }}</td>
-                        <td>{{ p.speed }}</td>
-                        <td>{{ p.arm }}</td>
-                        <td>{{ p.defense }}</td>
-                        <td>{{ p.catch }}</td>
+                        <td><input type="checkbox" name="teamA_ids" value="{{ player.id }}"></td>
+                        <td>{{ player.name }}</td>
+                        <td>{{ player.contact }}</td>
+                        <td>{{ player.power }}</td>
+                        <td>{{ player.speed }}</td>
+                        <td>{{ player.arm }}</td>
+                        <td>{{ player.defense }}</td>
+                        <td>{{ player.catch }}</td>
                     </tr>
                     {% endfor %}
                 </table>
             </div>
 
-            <!-- 相手チーム -->
             <div>
                 <h2>相手チーム</h2>
                 <table>
                     <tr>
                         <th>選択</th><th>名前</th><th>ミート</th><th>パワー</th><th>走力</th><th>肩力</th><th>守備力</th><th>捕球</th>
                     </tr>
-                    {% for p in players %}
+                    {% for player in players %}
                     <tr>
-                        <td><input type="checkbox" name="teamB_ids" value="{{ p.id }}"></td>
-                        <td>{{ p.name }}</td>
-                        <td>{{ p.contact }}</td>
-                        <td>{{ p.power }}</td>
-                        <td>{{ p.speed }}</td>
-                        <td>{{ p.arm }}</td>
-                        <td>{{ p.defense }}</td>
-                        <td>{{ p.catch }}</td>
+                        <td><input type="checkbox" name="teamB_ids" value="{{ player.id }}"></td>
+                        <td>{{ player.name }}</td>
+                        <td>{{ player.contact }}</td>
+                        <td>{{ player.power }}</td>
+                        <td>{{ player.speed }}</td>
+                        <td>{{ player.arm }}</td>
+                        <td>{{ player.defense }}</td>
+                        <td>{{ player.catch }}</td>
                     </tr>
                     {% endfor %}
                 </table>
             </div>
         </div>
-
         <p><button type="submit">試合開始</button></p>
     </form>
-
     <p><a href="{{ url_for('show_players') }}">登録済み選手一覧へ戻る</a></p>
 </body>
 </html>
