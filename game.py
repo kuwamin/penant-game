@@ -57,6 +57,8 @@ class Game:
                 score += 1  # 今は単純化した得点処理
             elif result == "アウト":
                 outs += 1
+                self.current_outs = outs
+
 
             batter_index += 1
 
@@ -65,7 +67,10 @@ class Game:
     def simulate_half_inning_with_log(self, offense_team: Team, defense_team: Team):
         score = 0
         outs = 0
-        bases = [False, False, False]  # 1塁, 2塁, 3塁
+        bases = [False, False, False]
+
+        self.current_outs = outs
+        self.current_bases = bases
 
         if offense_team == self.team_home:
             batter_index = self.batter_index_home
@@ -87,8 +92,14 @@ class Game:
             result, hit_prob = self.at_bat_result(batter, pitcher, defense_team)
             log_line = f"{situation}{batter.name} の打席結果：{result}（hit_prob: {hit_prob}）"
 
-            if result in ["三振", "ゴロ", "飛", "直"]:
+            if result in ["ゴロ", "飛", "直", "ヒット", "2塁打", "3塁打", "本塁打"]:
+                direction = Game.decide_hit_direction(result, batter)
+                result = f"{direction}{result}"
+
+            if result in ["三振", "ゴロ", "飛", "直", "フライアウト"]:
                 outs += 1
+                self.current_outs = outs
+
                 batter_index += 1
                 self.log.append(log_line)
                 continue
@@ -149,11 +160,15 @@ class Game:
                 if outs < 2 and bases[2]:
                     score += 1
                     outs += 1
+                    self.current_outs = outs
+
                     bases[2] = False
                     log_line += " → 3塁ランナー生還（犠飛）"
                 else:
                     result = "フライアウト"
                     outs += 1
+                    self.current_outs = outs
+
                     log_line = f"{situation}{batter.name} の打席結果：{result}（hit_prob: {hit_prob}）"
                     batter_index += 1
                     self.log.append(log_line)
@@ -161,6 +176,7 @@ class Game:
 
             elif result == "犠打":
                 outs += 1
+                self.current_outs = outs
                 if bases[0]:
                     bases = [False, bases[0], bases[1]]
                 log_line += " → 犠打で進塁"
@@ -255,6 +271,10 @@ class Game:
                     direction = Game.decide_hit_direction("ヒット", batter)
                     return f"{direction}ヒット", round(final_hit_prob, 3)
             else:
+                # 併殺可能かどうかチェック（1塁にランナー、かつ2アウト未満）
+                is_double_play_possible = self.current_outs < 2 and self.current_bases[0]
+                double_play_chance = 0.03 if speed < 50 and is_double_play_possible else 0.0
+
                 r3 = random.random()
                 if r3 < double_play_chance:
                     return "併打", round(final_hit_prob, 3)
@@ -267,6 +287,7 @@ class Game:
                 else:
                     direction = Game.decide_hit_direction("直", batter)
                     return f"{direction}直", round(final_hit_prob, 3)
+
 
 
     def get_winner(self):
@@ -327,6 +348,10 @@ def decide_hit_direction(result_type, batter):
             table = [("左", 0.32), ("中", 0.33), ("右", 0.35)]
         elif result_type == "本塁打":
             table = [("左", 0.30), ("中", 0.40), ("右", 0.30)]
+        elif result_type == "直":
+            table = [("投", 0.08), ("一", 0.20), ("二", 0.20), ("遊", 0.20), ("三", 0.20),
+             ("左", 0.04), ("中", 0.04), ("右", 0.04)]
+
         else:
             return ""
 
