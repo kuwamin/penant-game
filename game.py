@@ -107,21 +107,17 @@ class Game:
 
 
             elif result == "四球" or result == "死球":
-                if all(bases):  # 押し出し
+                if all(bases):  # 満塁で押し出し
                     score += 1
                     log_line += " → 押し出しで1点"
-                # 後方から順に進塁させる
-                if bases[2]:
-                    score += 1
-                    log_line += " → 3塁ランナー生還"
-                if bases[1]:
+
+                # ランナーを後ろから前へ進める（前の塁が空いていれば）
+                if bases[2] == False and bases[1]:
                     bases[2] = True
-                else:
-                    bases[2] = False
-                if bases[0]:
-                    bases[1] = True
-                else:
                     bases[1] = False
+                if bases[1] == False and bases[0]:
+                    bases[1] = True
+                    bases[0] = False
                 bases[0] = True  # 打者が1塁へ
 
 
@@ -217,25 +213,28 @@ class Game:
 
         # ---- 各要素の確率設計 ----
         hbp_chance = max(0.01, 0.06 - control * 0.001)
-        bb_chance = max(0.01, 0.02 + (100 - control) * 0.0015 + power * 0.0005)
+        # 四球
+        bb_chance = max(0.01, 0.03 + (100 - control) * 0.0015 + power * 0.0005)
         so_chance = max(0.05, 0.10 + (100 - contact) * 0.001 + control * 0.001)
 
+        # 犠打（ランナーあり＆2アウト未満のみ）
         has_runner = any(self.current_bases)
-        sac_bunt_chance = 0.02 if (has_runner and self.current_outs < 2 and speed > 70) else 0.005 if has_runner and self.current_outs < 2 else 0.0
-        sac_fly_chance = 0.005 + trajectory * 0.0025
+        sac_bunt_chance = 0.015 if has_runner and self.current_outs < 2 and speed > 70 else 0.005 if has_runner and self.current_outs < 2 else 0.0
+        sac_fly_chance = 0.015 + trajectory * 0.005
 
-        base_hit_prob = 0.002 * contact + 0.13
+        # ヒット確率計算
+        base_hit_prob = 0.002 * contact + 0.17
         breaking_penalty = (breaking - 6) * 0.01
         speed_penalty = abs(velocity - 145) * 0.002
         defense_penalty = (defense - 50) * 0.002
-        hit_random = random.uniform(-0.03, 0.03)
+        hit_random = random.uniform(-0.05, 0.05)
 
         final_hit_prob = base_hit_prob - breaking_penalty - speed_penalty - defense_penalty + hit_random
         final_hit_prob = max(0.0, min(final_hit_prob, 1.0))
 
-        long_hit_chance = 0.05 + (power - 50) * 0.003 + (trajectory - 2) * 0.015
-        triple_chance = 0.005 + speed * 0.0005
-        home_run_chance = max(0.0, 0.0008 * (power - 20))
+        # ヒットの中身の配分（調整）
+        long_hit_chance = 0.12 + (power - 50) * 0.005 + (trajectory - 2) * 0.02
+        home_run_chance = max(0.0, 0.002 * (power - 20))
 
         ground_out_chance = 0.15 + (3 - trajectory) * 0.03
         fly_out_chance = 0.1 + trajectory * 0.02

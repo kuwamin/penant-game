@@ -142,7 +142,7 @@ def simulate():
     teamA = Team("あなたのチーム")
     # あなたのチームの仮想投手（今はCOM固定と同様）
     pitcherA = Player("マイチームエース", "投手", is_pitcher=True, stats={
-        "pitch_speed": 145, "control": 70, "stamina": 75, "breaking_ball": 6
+        "pitch_speed": 145, "control": 70, "stamina": 75, "breaking_ball": 60
     })
     teamA.add_player(pitcherA)
     for p in ordered_players:
