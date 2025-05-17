@@ -82,12 +82,12 @@ def simulate():
         players = PlayerModel.query.all()
         return render_template("select_starters.html", players=players, error="9人ちょうど選んでください。")
 
-    selected_players = PlayerModel.query.filter(PlayerModel.id.in_(ids)).all()
-    selected_players_dict = {str(p.id): p for p in selected_players}
-    starters = [selected_players_dict[pid] for pid in ids]  # 順序維持
+    # 順序を維持して取得
+    selected_players_dict = {str(p.id): p for p in PlayerModel.query.filter(PlayerModel.id.in_(ids)).all()}
+    ordered_players = [selected_players_dict[pid] for pid in ids]
 
     teamA = Team("あなたのチーム")
-    for p in starters:
+    for p in ordered_players:
         player = Player(name=p.name, position="野手", is_pitcher=False, stats={
             "contact": p.contact,
             "power": p.power,
@@ -98,10 +98,10 @@ def simulate():
         }, position_role="不明")
         teamA.add_player(player)
 
-    dh_player = teamA.players[-1]  # 最後に選んだ選手をDH
+    dh_player = teamA.players[-1]
     teamA.set_lineup_and_defense(teamA.players, dh_player=dh_player)
 
-    # COMチーム（前と同じ）
+    # 相手COMチーム生成（今まで通り）
     teamB = Team("COMチーム")
     pitcherB = Player("エースCOM", "投手", is_pitcher=True, stats={
         "pitch_speed": 150, "control": 75, "stamina": 80, "breaking_ball": 65
@@ -115,6 +115,7 @@ def simulate():
         auto_batters.append(p)
     teamB.set_lineup_and_defense(auto_batters, dh_player=auto_batters[8])
 
+    # 試合開始
     game = Game(team_home=teamA, team_away=teamB)
     game.play_game()
 
