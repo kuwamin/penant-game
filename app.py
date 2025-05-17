@@ -437,11 +437,12 @@ def simulate_season():
                 stat = SeasonStatModel(player_id=p.id)
                 db.session.add(stat)
 
-            stat.at_bats     += getattr(p, "at_bats", 0) or 0
-            stat.hits        += getattr(p, "hits", 0) or 0
-            stat.walks       += getattr(p, "walks", 0) or 0
-            stat.strikeouts  += getattr(p, "strikeouts", 0) or 0
-            stat.home_runs   += getattr(p, "home_runs", 0) or 0
+            stat.at_bats     = (stat.at_bats or 0)     + (getattr(p, "at_bats", 0) or 0)
+            stat.hits        = (stat.hits or 0)        + (getattr(p, "hits", 0) or 0)
+            stat.walks       = (stat.walks or 0)       + (getattr(p, "walks", 0) or 0)
+            stat.strikeouts  = (stat.strikeouts or 0)  + (getattr(p, "strikeouts", 0) or 0)
+            stat.home_runs   = (stat.home_runs or 0)   + (getattr(p, "home_runs", 0) or 0)
+
 
 
     db.session.commit()
