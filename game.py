@@ -62,6 +62,49 @@ class Game:
 
         return score
     
+    def decide_hit_direction(result_type, batter):
+        power = batter.power
+        trajectory = getattr(batter, 'trajectory', 2)
+        pt_ratio = ((trajectory - 1) / 3) * 0.3 + (power / 100) * 0.7
+        pt_ratio = min(1.0, max(0.0, pt_ratio)) 
+
+        def weighted_choice(options):
+            r = random.random()
+            cumulative = 0
+            for direction, weight in options:
+                cumulative += weight
+                if r < cumulative:
+                    return direction
+            return options[-1][0]
+
+        if result_type == "ゴロ":
+            table = [("投", 0.07), ("捕", 0.01), ("一", 0.20), ("二", 0.26), ("遊", 0.26), ("三", 0.20)]
+
+        elif result_type == "飛":
+            base = [("投", 0.06), ("捕", 0.01), ("一", 0.15), ("二", 0.19), ("遊", 0.19), ("三", 0.15),
+                    ("左", 0.07), ("中", 0.11), ("右", 0.07)]
+            table = []
+            for pos, weight in base:
+                if pos in ["左", "中", "右"]:
+                    weight += pt_ratio * weight * 0.2  # 外野は最大+20%
+                else:
+                    weight -= pt_ratio * weight * 0.2  # 内野は最大-20%
+                table.append((pos, weight))
+            total = sum(w for _, w in table)
+            table = [(pos, w / total) for pos, w in table]
+
+        elif result_type == "ヒット":
+            table = [("投", 0.01), ("捕", 0.01), ("一", 0.02), ("二", 0.03), ("遊", 0.04), ("三", 0.04),
+                    ("左", 0.28), ("中", 0.29), ("右", 0.28)]
+        elif result_type in ["2塁打", "3塁打"]:
+            table = [("左", 0.32), ("中", 0.33), ("右", 0.35)]
+        elif result_type == "本塁打":
+            table = [("左", 0.30), ("中", 0.40), ("右", 0.30)]
+        else:
+            return ""
+
+        return weighted_choice(table)
+    
     def simulate_half_inning_with_log(self, offense_team: Team, defense_team: Team):
         score = 0
         outs = 0
@@ -224,7 +267,7 @@ class Game:
         # 長打・HR内訳
         long_hit_chance = 0.1 + (power - 50) * 0.005 + (trajectory - 2) * 0.02
         triple_chance = 0.02 + speed * 0.001
-        home_run_chance = 0.05 + (power - 80) * 0.01 + (trajectory - 2) * 0.015
+        home_run_chance = max(0.0, 0.001 * (power - 20))  # 20→0%、80→6%
 
         # ゴロ・フライ・ライナー
         ground_out_chance = 0.15 + (3 - trajectory) * 0.03
@@ -293,3 +336,7 @@ class Game:
         print("\n試合結果：")
         print(f"{self.team_home.name}: {self.score_home}点")
         print(f"{self.team_away.name}: {self.score_away}点")
+    
+# Gameクラスの外（ファイルの最後）に追加
+Game.decide_hit_direction = staticmethod(decide_hit_direction)
+   
