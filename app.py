@@ -1,10 +1,17 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
+from models import PlayerModel
+from db import db
 from game import Game
 from team import Team
 from player import Player
 import random
+import os
 
 app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db.init_app(app)
 
 def generate_random_stats():
     return {
@@ -20,48 +27,43 @@ def generate_random_stats():
 def index():
     return render_template('index.html')
 
-@app.route('/simulate', methods=['POST'])
-def simulate():
-    # ユーザー入力からチーム作成
-    teamA = Team("あなたのチーム")
-    batters = []
-    for i in range(1, 10):
-        name = request.form.get(f'player{i}')
-        stats = generate_random_stats()
-        player = Player(name=name, position="野手", is_pitcher=False, stats=stats, position_role="不明")
-        teamA.add_player(player)
-        batters.append(player)
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        messages = []
+        for i in range(1, 10):
+            name = request.form.get(f'player{i}_name')
+            contact = int(request.form.get(f'player{i}_contact'))
+            power = int(request.form.get(f'player{i}_power'))
+            speed = int(request.form.get(f'player{i}_speed'))
+            arm = int(request.form.get(f'player{i}_arm'))
+            defense = int(request.form.get(f'player{i}_defense'))
+            catch = int(request.form.get(f'player{i}_catch'))
 
-    dh_index = int(request.form.get("dh_index")) - 1
-    dh_player = batters[dh_index]
-    teamA.set_lineup_and_defense(batters, dh_player=dh_player)
+            # 重複チェック
+            existing = PlayerModel.query.filter_by(name=name).first()
+            if existing:
+                messages.append(f"{name} はすでに登録されています。")
+                continue
 
-    # 自動生成チーム（相手）
-    teamB = Team("COMチーム")
-    pitcherB = Player("エースCOM", "投手", is_pitcher=True, stats={
-        "pitch_speed": 150, "control": 75, "stamina": 80, "breaking_ball": 65
-    })
-    teamB.add_player(pitcherB)
-    auto_batters = []
-    for i in range(9):
-        stats = generate_random_stats()
-        p = Player(name=f"COM選手{i+1}", position="野手", is_pitcher=False, stats=stats, position_role="不明")
-        teamB.add_player(p)
-        auto_batters.append(p)
-    teamB.set_lineup_and_defense(auto_batters, dh_player=auto_batters[8])
+            player = PlayerModel(
+                name=name,
+                contact=contact,
+                power=power,
+                speed=speed,
+                arm=arm,
+                defense=defense,
+                catch=catch
+            )
+            db.session.add(player)
+        
+        if messages:
+            return render_template("register.html", message="\\n".join(messages))
+        
+        db.session.commit()
+        return render_template("register.html", message="登録完了しました。")
 
-    # 試合実行
-    game = Game(team_home=teamA, team_away=teamB)
-    game.play_game()
-
-    result = {
-        "teamA": teamA.name,
-        "teamB": teamB.name,
-        "scoreA": game.score_home,
-        "scoreB": game.score_away
-    }
-
-    return render_template("result.html", result=result)
+    return render_template("register.html")
 
 if __name__ == '__main__':
     import os
