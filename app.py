@@ -120,7 +120,8 @@ def simulate():
         "teamA": teamA.name,
         "teamB": teamB.name,
         "scoreA": game.score_home,
-        "scoreB": game.score_away
+        "scoreB": game.score_away,
+        "log": game.log   # ← ここ追加！
     }
 
     return render_template("result.html", result=result)

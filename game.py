@@ -3,22 +3,25 @@ from team import Team
 import random
 
 class Game:
-    def __init__(self, team_home: Team, team_away: Team):
+    def __init__(self, team_home, team_away):
         self.team_home = team_home
         self.team_away = team_away
         self.score_home = 0
         self.score_away = 0
+        self.log = []  # ここで試合ログを記録
 
     def play_game(self):
-        for inning in range(1, 10):
-            print(f"\n{inning}回表（{self.team_away.name}の攻撃）")
-            self.score_away += self.simulate_half_inning(self.team_away, self.team_home)
+        # 表：あなたのチーム（home）が攻撃
+        self.log.append(f"【{self.team_home.name} の攻撃】")
+        self.score_home = self.simulate_half_inning_with_log(self.team_home, self.team_away)
 
-            print(f"{inning}回裏（{self.team_home.name}の攻撃）")
-            self.score_home += self.simulate_half_inning(self.team_home, self.team_away)
+        # 裏：COMチームが攻撃
+        self.log.append(f"【{self.team_away.name} の攻撃】")
+        self.score_away = self.simulate_half_inning_with_log(self.team_away, self.team_home)
 
-        self.print_result()
-        return self.get_winner()
+        self.log.append(f"{self.team_home.name}: {self.score_home}点")
+        self.log.append(f"{self.team_away.name}: {self.score_away}点")
+
 
     def simulate_half_inning(self, offense_team: Team, defense_team: Team):
         score = 0
@@ -47,6 +50,33 @@ class Game:
             batter_index += 1
 
         return score
+    
+    def simulate_half_inning_with_log(self, offense_team: Team, defense_team: Team):
+        score = 0
+        outs = 0
+        batter_index = 0
+
+        pitcher = next((p for p in defense_team.players if p.is_pitcher), None)
+        batters = offense_team.starters
+        while outs < 3:
+            batter = batters[batter_index % len(batters)]
+            if batter.is_pitcher:
+                batter_index += 1
+                continue
+
+            result = self.at_bat_result(batter, pitcher, defense_team)
+            self.log.append(f"{batter.name} の打席結果：{result}")
+
+            if result in ["ヒット", "長打", "ホームラン"]:
+                score += 1
+            elif result == "アウト":
+                outs += 1
+
+            batter_index += 1
+
+        self.log.append(f"{offense_team.name} の得点：{score}点")
+        return score
+
 
     def at_bat_result(self, batter: Player, pitcher: Player, defense_team: Team):
         hit_chance = batter.contact - pitcher.control + random.randint(-10, 10)
