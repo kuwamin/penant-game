@@ -69,6 +69,21 @@ def delete_player(player_id):
     db.session.delete(player)
     db.session.commit()
     return redirect(url_for('show_players'))  # ※show_playersに変更済みならそれ
+    
+@app.route('/edit_player/<int:player_id>', methods=['GET', 'POST'])
+def edit_player(player_id):
+    player = PlayerModel.query.get_or_404(player_id)
+    if request.method == 'POST':
+        player.name = request.form['name']
+        player.contact = int(request.form['contact'])
+        player.power = int(request.form['power'])
+        player.speed = int(request.form['speed'])
+        player.arm = int(request.form['arm'])
+        player.defense = int(request.form['defense'])
+        player.catch = int(request.form['catch'])
+        db.session.commit()
+        return redirect(url_for('show_players'))
+    return render_template('edit_player.html', player=player)    
 
 @app.route('/select_starters', methods=['GET'])
 def select_starters():
