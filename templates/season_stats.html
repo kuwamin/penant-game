@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>シーズン成績一覧</title>
+    <style>
+        table { border-collapse: collapse; width: 90%; margin: auto; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        th { background-color: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <h1 style="text-align:center;">シーズン成績一覧</h1>
+    <table>
+        <tr>
+            <th>選手名</th>
+            <th>打席</th>
+            <th>安打</th>
+            <th>打率</th>
+            <th>四球</th>
+            <th>三振</th>
+            <th>本塁打</th>
+        </tr>
+        {% for s in stats %}
+        <tr>
+            <td>{{ s.name }}</td>
+            <td>{{ s.at_bats }}</td>
+            <td>{{ s.hits }}</td>
+            <td>{{ s.avg }}</td>
+            <td>{{ s.walks }}</td>
+            <td>{{ s.strikeouts }}</td>
+            <td>{{ s.home_runs }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <p style="text-align:center;"><a href="{{ url_for('index') }}">ホームに戻る</a></p>
+</body>
+</html>

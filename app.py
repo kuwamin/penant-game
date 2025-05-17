@@ -536,7 +536,37 @@ def simulate_season_with_ids():
             stat.home_runs = (stat.home_runs or 0) + (getattr(p, "home_runs", 0) or 0)
 
     db.session.commit()
-    return "143試合を完了し、成績を保存しました！"
+    return render_template("simulation_complete.html")
+
+
+
+@app.route('/season_stats')
+def season_stats():
+    from sqlalchemy import desc
+    from sqlalchemy.orm import joinedload
+
+    stats = SeasonStatModel.query.options(joinedload(SeasonStatModel.player)).all()
+
+    results = []
+    for stat in stats:
+        ab = stat.at_bats or 0
+        hits = stat.hits or 0
+        avg = round(hits / ab, 3) if ab > 0 else 0.000
+        results.append({
+            "name": stat.player.name,
+            "at_bats": ab,
+            "hits": hits,
+            "avg": f"{avg:.3f}",
+            "walks": stat.walks or 0,
+            "strikeouts": stat.strikeouts or 0,
+            "home_runs": stat.home_runs or 0
+        })
+
+    # 打率降順でソート
+    results.sort(key=lambda x: float(x["avg"]), reverse=True)
+
+    return render_template("season_stats.html", stats=results)
+
 
 
 if __name__ == '__main__':

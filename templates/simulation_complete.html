@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>シーズン完了</title>
+</head>
+<body>
+    <h1 style="text-align: center;">143試合を完了しました！</h1>
+    <p style="text-align: center;">成績を確認したい場合は以下をクリックしてください。</p>
+    <div style="text-align: center;">
+        <a href="{{ url_for('season_stats') }}">
+            <button style="padding: 10px 20px; font-size: 16px;">成績を表示する</button>
+        </a>
+    </div>
+    <p style="text-align: center; margin-top: 30px;">
+        <a href="{{ url_for('index') }}">ホームに戻る</a>
+    </p>
+</body>
+</html>
