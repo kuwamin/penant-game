@@ -103,9 +103,11 @@ class Game:
 
 
     def at_bat_result(self, batter: Player, pitcher: Player, defense_team: Team):
+        # 守備スコア
         defenders = list(defense_team.defense_positions.values())
         defense_score = sum(p.defense for p in defenders) / len(defenders) if defenders else 50
 
+        # ヒット確率の構成要素
         base_hit_prob = 0.0016 * batter.contact + 0.132
         breaking_penalty = (pitcher.breaking_ball - 6) * 0.01
         speed_penalty = abs(pitcher.pitch_speed - 145) * 0.002
@@ -113,17 +115,30 @@ class Game:
         random_factor = random.uniform(-0.05, 0.05)
 
         final_hit_prob = base_hit_prob - breaking_penalty - speed_penalty - defense_penalty + random_factor
+        final_hit_prob = max(0.0, min(final_hit_prob, 1.0))  # 0.0〜1.0に制限
 
-        if final_hit_prob > 0.9:
-            result = "ホームラン"
-        elif final_hit_prob > 0.6:
-            result = "長打"
-        elif final_hit_prob > 0.3:
-            result = "ヒット"
+        # ヒットするかを確率で抽選
+        if random.random() < final_hit_prob:
+            # ヒットした場合：長打 or ホームランを再抽選
+            power = batter.power
+            long_hit_chance = 0.1 + (power - 50) * 0.005  # パワー50で10%、パワー70で20%
+            home_run_chance = 0.05 + (power - 80) * 0.01  # パワー80で5%、パワー90で15%
+
+            long_hit_chance = max(0.0, min(long_hit_chance, 1.0))
+            home_run_chance = max(0.0, min(home_run_chance, 1.0))
+
+            r = random.random()
+            if r < home_run_chance:
+                result = "ホームラン"
+            elif r < home_run_chance + long_hit_chance:
+                result = "長打"
+            else:
+                result = "ヒット"
         else:
             result = "アウト"
 
         return result, round(final_hit_prob, 3)
+
 
     def get_winner(self):
         if self.score_home > self.score_away:
