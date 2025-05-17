@@ -124,7 +124,7 @@ def simulate():
     # 相手COMチーム生成（今まで通り）
     teamB = Team("COMチーム")
     pitcherB = Player("エースCOM", "投手", is_pitcher=True, stats={
-        "pitch_speed": 150, "control": 75, "stamina": 80, "breaking_ball": 65
+        "pitch_speed": 150, "control": 40, "stamina": 70, "breaking_ball": 6
     })
     teamB.add_player(pitcherB)
     auto_batters = []
