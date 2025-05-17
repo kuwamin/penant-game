@@ -235,6 +235,7 @@ class Game:
         # ヒットの中身の配分（調整）
         long_hit_chance = 0.12 + (power - 50) * 0.005 + (trajectory - 2) * 0.02
         home_run_chance = max(0.0, 0.002 * (power - 20))
+        triple_chance = 0.01 + speed * 0.001
 
         ground_out_chance = 0.15 + (3 - trajectory) * 0.03
         fly_out_chance = 0.1 + trajectory * 0.02
