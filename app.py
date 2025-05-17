@@ -87,6 +87,11 @@ def simulate():
     ordered_players = [selected_players_dict[pid] for pid in ids]
 
     teamA = Team("あなたのチーム")
+    # あなたのチームの仮想投手（今はCOM固定と同様）
+    pitcherA = Player("マイチームエース", "投手", is_pitcher=True, stats={
+        "pitch_speed": 145, "control": 70, "stamina": 75, "breaking_ball": 60
+    })
+    teamA.add_player(pitcherA)
     for p in ordered_players:
         player = Player(name=p.name, position="野手", is_pitcher=False, stats={
             "contact": p.contact,
