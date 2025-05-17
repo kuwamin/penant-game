@@ -45,13 +45,20 @@ def register():
 
         player = PlayerModel(
             name=name,
-            contact=contact,
-            power=power,
-            speed=speed,
-            arm=arm,
-            defense=defense,
-            catch=catch
+            trajectory=2,  # デフォルトで必要
+            contact=0,
+            power=0,
+            speed=0,
+            arm=0,
+            defense=0,
+            catch=0,
+            is_pitcher=True,
+            pitch_speed=pitch_speed,
+            control=control,
+            stamina=stamina,
+            breaking_ball=breaking_ball
         )
+
         db.session.add(player)
         db.session.commit()
         return render_template("register.html", message=f"{name} を登録しました！")
