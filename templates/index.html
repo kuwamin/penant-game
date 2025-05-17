@@ -2,25 +2,16 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>チーム編成（能力値あり）</title>
+    <title>ペナントゲーム ホーム</title>
 </head>
 <body>
-    <h1>あなたのチームを編成してください</h1>
-    <form action="/simulate" method="post">
-        {% for i in range(1, 10) %}
-        <fieldset style="margin-bottom: 20px; padding: 10px; border: 1px solid #ccc;">
-            <legend>選手{{ i }}</legend>
-            名前: <input type="text" name="player{{ i }}_name" required><br>
-            ミート: <input type="number" name="player{{ i }}_contact" min="0" max="100" required><br>
-            パワー: <input type="number" name="player{{ i }}_power" min="0" max="100" required><br>
-            走力: <input type="number" name="player{{ i }}_speed" min="0" max="100" required><br>
-            肩力: <input type="number" name="player{{ i }}_arm" min="0" max="100" required><br>
-            守備力: <input type="number" name="player{{ i }}_defense" min="0" max="100" required><br>
-            捕球: <input type="number" name="player{{ i }}_catch" min="0" max="100" required><br>
-        </fieldset>
-        {% endfor %}
-        DHにする選手の番号（1〜9）: <input type="number" name="dh_index" min="1" max="9" required><br><br>
-        <button type="submit">試合開始！</button>
-    </form>
+    <h1>ペナント風ゲームへようこそ！</h1>
+
+    <p>以下から操作を選んでください：</p>
+
+    <ul>
+        <li><a href="{{ url_for('register') }}">選手登録</a></li>
+        <li><a href="{{ url_for('select_starters') }}">スタメン選択して試合開始</a></li>
+    </ul>
 </body>
 </html>
