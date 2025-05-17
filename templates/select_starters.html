@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>スタメン選択</title>
+</head>
+<body>
+    <h1>スタメン（9人）を選んでください</h1>
+
+    <form method="post" action="/simulate">
+        <table border="1" cellpadding="8">
+            <tr>
+                <th>選択</th><th>名前</th><th>ミート</th><th>パワー</th><th>走力</th><th>肩力</th><th>守備力</th><th>捕球</th>
+            </tr>
+            {% for p in players %}
+            <tr>
+                <td><input type="checkbox" name="starter_ids" value="{{ p.id }}"></td>
+                <td>{{ p.name }}</td>
+                <td>{{ p.contact }}</td>
+                <td>{{ p.power }}</td>
+                <td>{{ p.speed }}</td>
+                <td>{{ p.arm }}</td>
+                <td>{{ p.defense }}</td>
+                <td>{{ p.catch }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <p><button type="submit">試合開始</button></p>
+    </form>
+
+    {% if error %}
+    <script>alert("{{ error }}");</script>
+    {% endif %}
+</body>
+</html>

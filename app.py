@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash
 from models import PlayerModel
 from db import db
 from game import Game
@@ -64,6 +64,68 @@ def register():
         return render_template("register.html", message="登録完了しました。")
 
     return render_template("register.html")
+
+@app.route('/players')
+def players():
+    all_players = PlayerModel.query.all()
+    return render_template("players.html", players=all_players)
+
+@app.route('/select_starters', methods=['GET'])
+def select_starters():
+    players = PlayerModel.query.all()
+    return render_template("select_starters.html", players=players)
+
+@app.route('/simulate', methods=['POST'])
+def simulate():
+    ids = request.form.getlist("starter_ids")
+    if len(ids) != 9:
+        players = PlayerModel.query.all()
+        return render_template("select_starters.html", players=players, error="9人ちょうど選んでください。")
+
+    selected_players = PlayerModel.query.filter(PlayerModel.id.in_(ids)).all()
+    selected_players_dict = {str(p.id): p for p in selected_players}
+    starters = [selected_players_dict[pid] for pid in ids]  # 順序維持
+
+    teamA = Team("あなたのチーム")
+    for p in starters:
+        player = Player(name=p.name, position="野手", is_pitcher=False, stats={
+            "contact": p.contact,
+            "power": p.power,
+            "speed": p.speed,
+            "arm": p.arm,
+            "defense": p.defense,
+            "catch": p.catch
+        }, position_role="不明")
+        teamA.add_player(player)
+
+    dh_player = teamA.players[-1]  # 最後に選んだ選手をDH
+    teamA.set_lineup_and_defense(teamA.players, dh_player=dh_player)
+
+    # COMチーム（前と同じ）
+    teamB = Team("COMチーム")
+    pitcherB = Player("エースCOM", "投手", is_pitcher=True, stats={
+        "pitch_speed": 150, "control": 75, "stamina": 80, "breaking_ball": 65
+    })
+    teamB.add_player(pitcherB)
+    auto_batters = []
+    for i in range(9):
+        stats = generate_random_stats()
+        p = Player(name=f"COM選手{i+1}", position="野手", is_pitcher=False, stats=stats)
+        teamB.add_player(p)
+        auto_batters.append(p)
+    teamB.set_lineup_and_defense(auto_batters, dh_player=auto_batters[8])
+
+    game = Game(team_home=teamA, team_away=teamB)
+    game.play_game()
+
+    result = {
+        "teamA": teamA.name,
+        "teamB": teamB.name,
+        "scoreA": game.score_home,
+        "scoreB": game.score_away
+    }
+
+    return render_template("result.html", result=result)
 
 if __name__ == '__main__':
     import os

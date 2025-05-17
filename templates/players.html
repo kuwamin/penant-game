@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>登録済み選手一覧</title>
+</head>
+<body>
+    <h1>登録済み選手一覧</h1>
+    {% if players %}
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>名前</th><th>ミート</th><th>パワー</th><th>走力</th><th>肩力</th><th>守備力</th><th>捕球</th>
+        </tr>
+        {% for p in players %}
+        <tr>
+            <td>{{ p.name }}</td>
+            <td>{{ p.contact }}</td>
+            <td>{{ p.power }}</td>
+            <td>{{ p.speed }}</td>
+            <td>{{ p.arm }}</td>
+            <td>{{ p.defense }}</td>
+            <td>{{ p.catch }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>まだ選手が登録されていません。</p>
+    {% endif %}
+</body>
+</html>
