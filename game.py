@@ -81,76 +81,62 @@ class Game:
                 batter_index += 1
                 continue
 
-            result, hit_prob = self.at_bat_result(batter, pitcher, defense_team)
-            log_line = f"{batter.name} の打席結果：{result}（hit_prob: {hit_prob}）"
+            # 状況文字列作成
+            base_display = "".join([str(i+1) for i, b in enumerate(bases) if b]) or "なし"
+            situation = f"【{outs}アウト {base_display}塁】"
 
-            if result in ["三振", "ゴロ", "飛", "直"]:
+            result, hit_prob = self.at_bat_result(batter, pitcher, defense_team)
+            log_line = f"{situation}{batter.name} の打席結果：{result}（hit_prob: {hit_prob}）"
+
+            # ▼ 打撃結果ごとの処理
+            if result == "アウト":
                 outs += 1
 
-            elif result in ["ヒット", "2塁打", "3塁打"]:
-                runs = 0
+            elif result == "ゴロ" or result == "直" or result == "三振":
+                outs += 1
 
-                if result == "ヒット":
-                    if bases[2]:
-                        runs += 1
-                    bases[2] = bases[1]
-                    bases[1] = bases[0]
-                    bases[0] = True
-
-                elif result == "2塁打":
-                    if bases[2]:
-                        runs += 1
-                    if bases[1]:
-                        runs += 1
-                    if bases[0]:
-                        bases[2] = True
-                    else:
-                        bases[2] = False
-                    bases[1] = True
-                    bases[0] = False
-
-                elif result == "3塁打":
-                    runs += sum(bases)
-                    bases = [False, False, True]
-
-                score += runs
-                if runs > 0:
-                    log_line += f" → {runs} 点"
-
-            elif result == "本塁打":
-                runs = 1 + sum(bases)
-                score += runs
-                bases = [False, False, False]
-                log_line += f" → ホームランで {runs} 点"
-
-            elif result in ["四球", "死球"]:
-                # 押し出し処理
-                if all(bases):  # 満塁
+            elif result == "四球" or result == "死球":
+                if all(bases):  # 押し出し
                     score += 1
                     log_line += " → 押し出しで1点"
-                # シンプルな進塁（1→2→3）
-                if bases[2] and bases[1] and not bases[0]:
-                    bases[0] = True
-                else:
-                    for i in reversed(range(1, 3)):
-                        bases[i] = bases[i - 1]
-                    bases[0] = True
+                # ランナー進塁
+                bases = [True] + bases[:2]
 
-            elif result == "犠打":
-                if bases[0] and outs < 2:
-                    bases[1] = True
-                outs += 1
+            elif result == "ヒット":
+                if bases[2]:
+                    score += 1
+                    log_line += " → 3塁ランナー生還"
+                bases[2] = bases[1]
+                bases[1] = bases[0]
+                bases[0] = True
+
+            elif result == "長打":
+                if bases[2]:
+                    score += 1
+                    log_line += " → 3塁ランナー生還"
+                if bases[1]:
+                    score += 1
+                    log_line += " → 2塁ランナー生還"
+                bases[2] = bases[0]
+                bases[1] = True
+                bases[0] = False
+
+            elif result == "ホームラン":
+                runs = 1 + sum(bases)
+                score += runs
+                log_line += f" → ホームランで {runs} 点"
+                bases = [False, False, False]
 
             elif result == "犠飛":
-                if bases[2] and outs < 2:
+                if outs < 2 and bases[2]:
                     score += 1
+                    outs += 1
                     bases[2] = False
-                    log_line += " → 犠飛で1点"
-                outs += 1
-
-            elif result == "併打":
-                outs += 2
-                bases[0] = False  # ランナー封殺
+                    log_line += " → 3塁ランナー生還（犠飛）"
+                else:
+                    result = "フライアウト"
+                    outs += 1
+                    log_line = f"{situation}{batter.name} の打席結果：{result}（hit_prob: {hit_prob}）"
 
             batter_index += 1
             self.log.append(log_line)
