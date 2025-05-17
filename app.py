@@ -247,6 +247,44 @@ def simulate():
 
     return render_template("result.html", result=result)
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        contact = int(request.form.get('contact'))
+        power = int(request.form.get('power'))
+        speed = int(request.form.get('speed'))
+        arm = int(request.form.get('arm'))
+        defense = int(request.form.get('defense'))
+        catch = int(request.form.get('catch'))
+
+        existing = PlayerModel.query.filter_by(name=name).first()
+        if existing:
+            return render_template("register.html", message=f"{name} はすでに登録されています。")
+
+        player = PlayerModel(
+            name=name,
+            trajectory=2,
+            contact=contact,
+            power=power,
+            speed=speed,
+            arm=arm,
+            defense=defense,
+            catch=catch,
+            is_pitcher=False,
+            pitch_speed=0,
+            control=0,
+            stamina=0,
+            breaking_ball=0
+        )
+
+        db.session.add(player)
+        db.session.commit()
+        return render_template("register.html", message=f"{name} を登録しました！")
+
+    return render_template("register.html")
+
+
 @app.route('/register_pitcher', methods=['GET', 'POST'])
 def register_pitcher():
     if request.method == 'POST':
