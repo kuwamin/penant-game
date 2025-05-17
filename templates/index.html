@@ -2,16 +2,17 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>ペナントゲーム ホーム version 1.0.2</title>
+    <title>ペナントゲーム ホーム</title>
 </head>
 <body>
-    <h1>ペナント風ゲームへようこそ！</h1>
+    <h1>ペナント風ゲームへようこそ！version 1.0.3</h1>
 
     <p>以下から操作を選んでください：</p>
 
     <ul>
         <li><a href="{{ url_for('register') }}">選手登録</a></li>
         <li><a href="{{ url_for('select_starters') }}">スタメン選択して試合開始</a></li>
+        <li><a href="{{ url_for('players') }}">登録済み選手一覧</a></li>  <!-- ★ 追加 -->
     </ul>
 </body>
 </html>
