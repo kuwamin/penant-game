@@ -85,6 +85,44 @@ def edit_player(player_id):
         return redirect(url_for('show_players'))
     return render_template('edit_player.html', player=player)    
 
+@app.route('/duplicate_player/<int:player_id>', methods=['POST'])
+def duplicate_player(player_id):
+    original = PlayerModel.query.get_or_404(player_id)
+
+    # ベース名で既存のコピー数を確認
+    base_name = original.name
+    similar_names = PlayerModel.query.filter(PlayerModel.name.ilike(f"{base_name}_%")).all()
+    existing_numbers = []
+
+    for p in similar_names:
+        try:
+            suffix = int(p.name.split("_")[-1])
+            existing_numbers.append(suffix)
+        except ValueError:
+            continue
+
+    next_number = 1
+    while next_number in existing_numbers:
+        next_number += 1
+
+    new_name = f"{base_name}_{next_number}"
+
+    copy = PlayerModel(
+        name=new_name,
+        contact=original.contact,
+        power=original.power,
+        speed=original.speed,
+        arm=original.arm,
+        defense=original.defense,
+        catch=original.catch,
+        trajectory=original.trajectory
+    )
+    db.session.add(copy)
+    db.session.commit()
+
+    return redirect(url_for('show_players'))
+
+
 @app.route('/select_starters', methods=['GET'])
 def select_starters():
     players = PlayerModel.query.all()
