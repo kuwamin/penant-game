@@ -65,8 +65,8 @@ class Game:
     def simulate_half_inning_with_log(self, offense_team: Team, defense_team: Team):
         score = 0
         outs = 0
+        bases = [False, False, False]  # 1塁、2塁、3塁
 
-        # 打順の基準となるバッターインデックスをチームごとに選ぶ
         if offense_team == self.team_home:
             batter_index = self.batter_index_home
         else:
@@ -82,16 +82,46 @@ class Game:
                 continue
 
             result, hit_prob = self.at_bat_result(batter, pitcher, defense_team)
-            self.log.append(f"{batter.name} の打席結果：{result}（hit_prob: {hit_prob}）")
+            log_line = f"{batter.name} の打席結果：{result}（hit_prob: {hit_prob}）"
 
-            if result in ["ヒット", "長打", "ホームラン"]:
-                score += 1
-            elif result == "アウト":
+            # 塁・得点処理
+            if result == "アウト":
                 outs += 1
 
+            elif result == "ヒット":
+                # 3塁ランナー生還
+                if bases[2]:
+                    score += 1
+                    log_line += " → 3塁ランナー生還"
+                # 2→3, 1→2
+                bases[2] = bases[1]
+                bases[1] = bases[0]
+                bases[0] = True  # 打者が1塁へ
+
+            elif result == "長打":
+                # 3塁, 2塁ランナー生還
+                if bases[2]:
+                    score += 1
+                    log_line += " → 3塁ランナー生還"
+                if bases[1]:
+                    score += 1
+                    log_line += " → 2塁ランナー生還"
+                # 1塁ランナー→3塁へ（進塁）
+                bases[2] = bases[0]
+                bases[1] = False
+                bases[0] = False
+                # 打者は2塁へ（ただし記録はしない）
+
+            elif result == "ホームラン":
+                runs = 1 + sum(bases)
+                score += runs
+                bases = [False, False, False]
+                log_line += f" → ホームランで {runs} 点"
+
+            self.log.append(log_line)
             batter_index += 1
 
-        # 次のイニングのために現在のバッター位置を保存
+        # 打順継続のために保存
         if offense_team == self.team_home:
             self.batter_index_home = batter_index % len(batters)
         else:
@@ -99,8 +129,6 @@ class Game:
 
         self.log.append(f"{offense_team.name} の得点：{score}点")
         return score
-
-
 
     def at_bat_result(self, batter: Player, pitcher: Player, defense_team: Team):
         # 守備スコア
