@@ -32,6 +32,13 @@
         {% for player in players if not player.is_pitcher %}
             <label><input type="checkbox" name="teamB_ids" value="{{ player.id }}"> {{ player.name }}</label><br>
         {% endfor %}
+        <h2>相手チームの投手（1人）</h2>
+        <select name="pitcherB_id" required>
+            <option value="">-- 投手を選択 --</option>
+            {% for pitcher in pitchers %}
+                <option value="{{ pitcher.id }}">{{ pitcher.name }}</option>
+            {% endfor %}
+        </select>
 
         <p><button type="submit">試合開始</button></p>
     </form>

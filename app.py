@@ -102,21 +102,27 @@ def select_starters():
 @app.route('/select_lineups', methods=['GET', 'POST'])
 def select_lineups():
     all_players = PlayerModel.query.all()
+    pitchers = PlayerModel.query.filter_by(is_pitcher=True).all()
     if request.method == 'POST':
         teamA_ids = request.form.getlist('teamA_ids')
         teamB_ids = request.form.getlist('teamB_ids')
         pitcherA_id = request.form.get('pitcherA_id')
+        pitcherB_id = request.form.get('pitcherB_id')
 
-        if len(teamA_ids) != 9 or len(teamB_ids) != 9 or not pitcherA_id:
-            error = "両チームとも9人、かつ投手を1人選んでください。"
-            return render_template('select_lineups.html', players=all_players, error=error)
+        if len(teamA_ids) != 9 or len(teamB_ids) != 9 or not pitcherA_id or not pitcherB_id:
+            error = "両チームとも9人、かつ投手を1人ずつ選んでください。"
+            pitchers = PlayerModel.query.filter_by(is_pitcher=True).all()
+            return render_template('select_lineups.html', players=all_players, pitchers=pitchers, error=error)
 
         return redirect(url_for(
             'simulate_with_ids',
             teamA_ids=','.join(teamA_ids),
             teamB_ids=','.join(teamB_ids),
-            pitcherA_id=pitcherA_id
+            pitcherA_id=pitcherA_id,
+            pitcherB_id=pitcherB_id
         ))
+
+
 
     return render_template('select_lineups.html', players=all_players)
 
@@ -214,11 +220,18 @@ def simulate():
     teamA.set_lineup_and_defense(teamA.players[1:], dh_player=dh_player)
 
     # 相手COMチーム生成（今まで通り）
-    teamB = Team("COMチーム")
-    pitcherB = Player("エースCOM", "投手", is_pitcher=True, stats={
-        "pitch_speed": 145, "control": 40, "stamina": 70, "breaking_ball": 7
+    pitcherB_id = request.args.get('pitcherB_id')
+    pitcherB_model = PlayerModel.query.get_or_404(pitcherB_id)
+    pitcherB = Player(name=pitcherB_model.name, position="投手", is_pitcher=True, stats={
+        "pitch_speed": pitcherB_model.pitch_speed,
+        "control": pitcherB_model.control,
+        "stamina": pitcherB_model.stamina,
+        "breaking_ball": pitcherB_model.breaking_ball
     })
+
+    teamB = Team("相手チーム")
     teamB.add_player(pitcherB)
+
     auto_batters = []
     for i in range(9):
         stats = generate_random_stats()
