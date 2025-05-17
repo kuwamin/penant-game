@@ -25,6 +25,9 @@
                     <button type="submit">削除</button>
                 </form>
                 <a href="{{ url_for('edit_player', player_id=p.id) }}">編集</a>
+                <form action="{{ url_for('duplicate_player', player_id=p.id) }}" method="post" style="display:inline;">
+                    <button type="submit">コピー</button>
+                </form>
             </td>
         </tr>
         {% endfor %}
@@ -32,9 +35,7 @@
     {% else %}
     <p>まだ選手が登録されていません。</p>
     {% endif %}
-    <form action="{{ url_for('duplicate_player', player_id=p.id) }}" method="post" style="display:inline;">
-    <button type="submit">コピー</button>
-    </form>
+
     <p><a href="{{ url_for('index') }}">ホームに戻る</a></p>
 </body>
 </html>
