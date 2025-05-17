@@ -131,6 +131,7 @@ def simulate_with_ids():
     teamA_ids = request.args.get('teamA_ids', '').split(',')
     teamB_ids = request.args.get('teamB_ids', '').split(',')
     pitcherA_id = request.args.get('pitcherA_id')
+    pitcherB_id = request.args.get('pitcherB_id')  # ← ① 追加
 
     selected_players_A = {str(p.id): p for p in PlayerModel.query.filter(PlayerModel.id.in_(teamA_ids)).all()}
     ordered_players_A = [selected_players_A[pid] for pid in teamA_ids]
@@ -139,11 +140,20 @@ def simulate_with_ids():
     ordered_players_B = [selected_players_B[pid] for pid in teamB_ids]
 
     pitcherA_model = PlayerModel.query.get_or_404(pitcherA_id)
+    pitcherB_model = PlayerModel.query.get_or_404(pitcherB_id)  # ← ② 追加
+
     pitcherA = Player(name=pitcherA_model.name, position="投手", is_pitcher=True, stats={
         "pitch_speed": pitcherA_model.pitch_speed,
         "control": pitcherA_model.control,
         "stamina": pitcherA_model.stamina,
         "breaking_ball": pitcherA_model.breaking_ball
+    })
+
+    pitcherB = Player(name=pitcherB_model.name, position="投手", is_pitcher=True, stats={  # ← ③ 修正
+        "pitch_speed": pitcherB_model.pitch_speed,
+        "control": pitcherB_model.control,
+        "stamina": pitcherB_model.stamina,
+        "breaking_ball": pitcherB_model.breaking_ball
     })
 
     # チーム構築
@@ -157,9 +167,6 @@ def simulate_with_ids():
     teamA.set_lineup_and_defense([p for p in teamA.players if not p.is_pitcher], dh_player=teamA.players[-1])
 
     teamB = Team("相手チーム")
-    pitcherB = Player("相手投手", "投手", is_pitcher=True, stats={
-        "pitch_speed": 150, "control": 60, "stamina": 70, "breaking_ball": 6
-    })
     teamB.add_player(pitcherB)
     for p in ordered_players_B:
         teamB.add_player(Player(name=p.name, position="野手", is_pitcher=False, stats={
