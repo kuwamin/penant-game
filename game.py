@@ -9,15 +9,23 @@ class Game:
         self.score_home = 0
         self.score_away = 0
         self.log = []  # ここで試合ログを記録
+        self.inning_scores_home = []  # 各回の得点（ホーム）
+        self.inning_scores_away = []  # 各回の得点（アウェイ）
+        self.hits_home = 0            # ヒット数（仮）
+        self.hits_away = 0
+
 
     def play_game(self):
-        # 表：あなたのチーム（home）が攻撃
-        self.log.append(f"【{self.team_home.name} の攻撃】")
-        self.score_home = self.simulate_half_inning_with_log(self.team_home, self.team_away)
+        for inning in range(1, 10):  # 1回〜9回まで
+            self.log.append(f"【{inning}回表：{self.team_home.name} の攻撃】")
+            score_home_inning = self.simulate_half_inning_with_log(self.team_home, self.team_away)
+            self.score_home += score_home_inning
+            self.inning_scores_home.append(score_home_inning)
 
-        # 裏：COMチームが攻撃
-        self.log.append(f"【{self.team_away.name} の攻撃】")
-        self.score_away = self.simulate_half_inning_with_log(self.team_away, self.team_home)
+            self.log.append(f"【{inning}回裏：{self.team_away.name} の攻撃】")
+            score_away_inning = self.simulate_half_inning_with_log(self.team_away, self.team_home)
+            self.score_away += score_away_inning
+            self.inning_scores_away.append(score_away_inning)
 
         self.log.append(f"{self.team_home.name}: {self.score_home}点")
         self.log.append(f"{self.team_away.name}: {self.score_away}点")

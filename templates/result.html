@@ -5,8 +5,45 @@
 </head>
 <body>
     <h1>試合結果</h1>
-    <p>{{ result.teamA }}: {{ result.scoreA }}点</p>
-    <p>{{ result.teamB }}: {{ result.scoreB }}点</p>
+
+    <!-- ★ スコアボード表示部分（ここを追加） -->
+    <h2>スコアボード</h2>
+    <table border="1">
+        <tr>
+            <th>チーム</th>
+            {% for i in range(1, 10) %}
+                <th>{{ i }}</th>
+            {% endfor %}
+            <th>R</th>
+            <th>H</th>
+            <th>E</th>
+        </tr>
+        <tr>
+            <td>{{ result.teamA }}</td>
+            {% for score in result.inning_scores_home %}
+                <td>{{ score }}</td>
+            {% endfor %}
+            {% for i in range(9 - result.inning_scores_home|length) %}
+                <td>-</td>
+            {% endfor %}
+            <td>{{ result.scoreA }}</td>
+            <td>{{ result.hits_home }}</td>
+            <td>{{ result.errors_home }}</td>
+        </tr>
+        <tr>
+            <td>{{ result.teamB }}</td>
+            {% for score in result.inning_scores_away %}
+                <td>{{ score }}</td>
+            {% endfor %}
+            {% for i in range(9 - result.inning_scores_away|length) %}
+                <td>-</td>
+            {% endfor %}
+            <td>{{ result.scoreB }}</td>
+            <td>{{ result.hits_away }}</td>
+            <td>{{ result.errors_away }}</td>
+        </tr>
+    </table>
+    <!-- ★ ここまで -->
 
     <h2>試合ログ</h2>
     <ul>
