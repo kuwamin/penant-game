@@ -474,32 +474,49 @@ def simulate_season_with_ids():
     pitcherB_model = PlayerModel.query.get_or_404(pitcherB_id)
 
     for _ in range(143):
-        pitcherA = Player(name=pitcherA_model.name, position="投手", is_pitcher=True, stats={
-            "pitch_speed": pitcherA_model.pitch_speed,
-            "control": pitcherA_model.control,
-            "stamina": pitcherA_model.stamina,
-            "breaking_ball": pitcherA_model.breaking_ball
-        })
-        pitcherB = Player(name=pitcherB_model.name, position="投手", is_pitcher=True, stats={
-            "pitch_speed": pitcherB_model.pitch_speed,
-            "control": pitcherB_model.control,
-            "stamina": pitcherB_model.stamina,
-            "breaking_ball": pitcherB_model.breaking_ball
-        })
+        pitcherA = Player(
+            id=pitcherA_model.id,
+            name=pitcherA_model.name,
+            position="投手",
+            is_pitcher=True,
+            stats={
+                "pitch_speed": pitcherA_model.pitch_speed,
+                "control": pitcherA_model.control,
+                "stamina": pitcherA_model.stamina,
+                "breaking_ball": pitcherA_model.breaking_ball
+            }
+        )
+        pitcherB = Player(
+            id=pitcherB_model.id,
+            name=pitcherB_model.name,
+            position="投手",
+            is_pitcher=True,
+            stats={
+                "pitch_speed": pitcherB_model.pitch_speed,
+                "control": pitcherB_model.control,
+                "stamina": pitcherB_model.stamina,
+                "breaking_ball": pitcherB_model.breaking_ball
+            }
+        )
 
         teamA = Team("あなたのチーム")
         teamA.add_player(pitcherA)
         a_objs = []
         for p in teamA_models:
-            player = Player(name=p.name, position="野手", is_pitcher=False, stats={
-                "contact": p.contact,
-                "power": p.power,
-                "speed": p.speed,
-                "arm": p.arm,
-                "defense": p.defense,
-                "catch": p.catch
-            })
-            player.id = p.id
+            player = Player(
+                id=p.id,
+                name=p.name,
+                position="野手",
+                is_pitcher=False,
+                stats={
+                    "contact": p.contact,
+                    "power": p.power,
+                    "speed": p.speed,
+                    "arm": p.arm,
+                    "defense": p.defense,
+                    "catch": p.catch
+                }
+            )
             teamA.add_player(player)
             a_objs.append(player)
         teamA.set_lineup_and_defense(a_objs, dh_player=a_objs[-1])
@@ -508,15 +525,20 @@ def simulate_season_with_ids():
         teamB.add_player(pitcherB)
         b_objs = []
         for p in teamB_models:
-            player = Player(name=p.name, position="野手", is_pitcher=False, stats={
-                "contact": p.contact,
-                "power": p.power,
-                "speed": p.speed,
-                "arm": p.arm,
-                "defense": p.defense,
-                "catch": p.catch
-            })
-            player.id = p.id
+            player = Player(
+                id=p.id,
+                name=p.name,
+                position="野手",
+                is_pitcher=False,
+                stats={
+                    "contact": p.contact,
+                    "power": p.power,
+                    "speed": p.speed,
+                    "arm": p.arm,
+                    "defense": p.defense,
+                    "catch": p.catch
+                }
+            )
             teamB.add_player(player)
             b_objs.append(player)
         teamB.set_lineup_and_defense(b_objs, dh_player=b_objs[-1])

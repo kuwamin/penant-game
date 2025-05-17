@@ -1,5 +1,11 @@
 class Player:
     def __init__(self, name, position, is_pitcher=False, stats=None, position_role=None):
+        self.at_bats = 0
+        self.hits = 0
+        self.walks = 0
+        self.strikeouts = 0
+        self.home_runs = 0
+        self.id = id  # ← ここを追加
         self.name = name
         self.position = position  # 投手 or 野手
         self.is_pitcher = is_pitcher
