@@ -91,14 +91,18 @@ class Game:
 
             result, hit_prob = self.at_bat_result(batter, pitcher, defense_team)
 
-            # 方向付けを行うが、ログ表示だけに使う
+            # 元の打撃結果を保持しておく
+            original_result = result
+
+            # 表示用に打球方向を取得（ログだけに使う）
             direction = ""
             if result in ["ゴロ", "飛", "直", "ヒット", "2塁打", "3塁打", "本塁打"]:
                 direction = Game.decide_hit_direction(result, batter)
 
             log_line = f"{situation}{batter.name} の打席結果：{direction}{result}（hit_prob: {hit_prob}）"
 
-            if result in ["三振", "ゴロ", "飛", "直", "フライアウト"]:
+            # ★ 判定は direction を含めない original_result で行う
+            if original_result in ["三振", "ゴロ", "飛", "直", "フライアウト"]:
                 outs += 1
                 self.current_outs = outs
                 batter_index += 1
