@@ -200,102 +200,94 @@ class Game:
         return score
 
     def at_bat_result(self, batter: Player, pitcher: Player, defense_team: Team):
-            r = random.random()
+        r = random.random()
 
-            # パラメータ
-            contact = batter.contact
-            power = batter.power
-            speed = batter.speed
-            trajectory = getattr(batter, 'trajectory', 2)
+        # パラメータ
+        contact = batter.contact
+        power = batter.power
+        speed = batter.speed
+        trajectory = getattr(batter, 'trajectory', 2)
 
-            control = pitcher.control
-            breaking = pitcher.breaking_ball
-            velocity = pitcher.pitch_speed
+        control = pitcher.control
+        breaking = pitcher.breaking_ball
+        velocity = pitcher.pitch_speed
 
-            defenders = list(defense_team.defense_positions.values())
-            defense = sum(p.defense for p in defenders) / len(defenders) if defenders else 50
+        defenders = list(defense_team.defense_positions.values())
+        defense = sum(p.defense for p in defenders) / len(defenders) if defenders else 50
 
-            # ---- 各要素の確率設計 ----
-            hbp_chance = max(0.01, 0.06 - control * 0.001)
-            bb_chance = max(0.01, 0.05 + (100 - control) * 0.002 + power * 0.001)
-            so_chance = max(0.05, 0.10 + (100 - contact) * 0.001 + control * 0.001)
-            # ランナーがいる場合のみ犠打を考慮（1, 2, 3塁どれかに走者がいる）
-            has_runner = any(self.current_bases)
-            # アウトが2アウト未満で、走者がいれば犠打のチャンスあり（弱打者がやりやすい）
-            if has_runner and self.current_outs < 2:
-                sac_bunt_chance = 0.02 if speed > 70 else 0.005
+        # ---- 各要素の確率設計 ----
+        hbp_chance = max(0.01, 0.06 - control * 0.001)
+        bb_chance = max(0.01, 0.02 + (100 - control) * 0.0015 + power * 0.0005)
+        so_chance = max(0.05, 0.10 + (100 - contact) * 0.001 + control * 0.001)
+
+        has_runner = any(self.current_bases)
+        sac_bunt_chance = 0.02 if (has_runner and self.current_outs < 2 and speed > 70) else 0.005 if has_runner and self.current_outs < 2 else 0.0
+        sac_fly_chance = 0.005 + trajectory * 0.0025
+
+        base_hit_prob = 0.002 * contact + 0.13
+        breaking_penalty = (breaking - 6) * 0.01
+        speed_penalty = abs(velocity - 145) * 0.002
+        defense_penalty = (defense - 50) * 0.002
+        hit_random = random.uniform(-0.03, 0.03)
+
+        final_hit_prob = base_hit_prob - breaking_penalty - speed_penalty - defense_penalty + hit_random
+        final_hit_prob = max(0.0, min(final_hit_prob, 1.0))
+
+        long_hit_chance = 0.05 + (power - 50) * 0.003 + (trajectory - 2) * 0.015
+        triple_chance = 0.005 + speed * 0.0005
+        home_run_chance = max(0.0, 0.0008 * (power - 20))
+
+        ground_out_chance = 0.15 + (3 - trajectory) * 0.03
+        fly_out_chance = 0.1 + trajectory * 0.02
+        line_out_chance = 0.05 + (contact / 100) * 0.05
+
+        double_play_chance = 0.03 if speed < 50 and self.current_outs < 2 and self.current_bases[0] else 0.0
+
+        p = random.random()
+        if p < hbp_chance:
+            return "死球", round(final_hit_prob, 3), ""
+        p -= hbp_chance
+        if p < bb_chance:
+            return "四球", round(final_hit_prob, 3), ""
+        p -= bb_chance
+        if p < so_chance:
+            return "三振", round(final_hit_prob, 3), ""
+        p -= so_chance
+        if p < sac_bunt_chance:
+            return "犠打", round(final_hit_prob, 3), ""
+        p -= sac_bunt_chance
+        if p < sac_fly_chance:
+            return "犠飛", round(final_hit_prob, 3), ""
+        p -= sac_fly_chance
+
+        if random.random() < final_hit_prob:
+            r2 = random.random()
+            if r2 < home_run_chance:
+                direction = Game.decide_hit_direction("本塁打", batter)
+                return "本塁打", round(final_hit_prob, 3), direction
+            elif r2 < home_run_chance + triple_chance:
+                direction = Game.decide_hit_direction("3塁打", batter)
+                return "3塁打", round(final_hit_prob, 3), direction
+            elif r2 < home_run_chance + triple_chance + long_hit_chance:
+                direction = Game.decide_hit_direction("2塁打", batter)
+                return "2塁打", round(final_hit_prob, 3), direction
             else:
-                sac_bunt_chance = 0.0
-            sac_fly_chance = 0.015 + trajectory * 0.005
-
-            base_hit_prob = 0.002 * contact + 0.17
-            breaking_penalty = (breaking - 6) * 0.01
-            speed_penalty = abs(velocity - 145) * 0.002
-            defense_penalty = (defense - 50) * 0.002
-            hit_random = random.uniform(-0.05, 0.05)
-
-            final_hit_prob = base_hit_prob - breaking_penalty - speed_penalty - defense_penalty + hit_random
-            final_hit_prob = max(0.0, min(final_hit_prob, 1.0))
-
-            long_hit_chance = 0.1 + (power - 50) * 0.005 + (trajectory - 2) * 0.02
-            triple_chance = 0.02 + speed * 0.001
-            home_run_chance = max(0.0, 0.001 * (power - 20))
-
-            ground_out_chance = 0.15 + (3 - trajectory) * 0.03
-            fly_out_chance = 0.1 + trajectory * 0.02
-            line_out_chance = 0.05 + (contact / 100) * 0.05
-
-            double_play_chance = 0.03 if speed < 50 else 0.01
-
-            p = random.random()
-            if p < hbp_chance:
-                return "死球", round(final_hit_prob, 3), ""
-            p -= hbp_chance
-            if p < bb_chance:
-                return "四球", round(final_hit_prob, 3), ""
-            p -= bb_chance
-            if p < so_chance:
-                return "三振", round(final_hit_prob, 3), ""
-            p -= so_chance
-            if p < sac_bunt_chance:
-                return "犠打", round(final_hit_prob, 3), ""
-            p -= sac_bunt_chance
-            if p < sac_fly_chance:
-                return "犠飛", round(final_hit_prob, 3), ""
-            p -= sac_fly_chance
-
-            if random.random() < final_hit_prob:
-                r2 = random.random()
-                if r2 < home_run_chance:
-                    direction = Game.decide_hit_direction("本塁打", batter)
-                    return "本塁打", round(final_hit_prob, 3), direction
-                elif r2 < home_run_chance + triple_chance:
-                    direction = Game.decide_hit_direction("3塁打", batter)
-                    return "3塁打", round(final_hit_prob, 3), direction
-                elif r2 < home_run_chance + triple_chance + long_hit_chance:
-                    direction = Game.decide_hit_direction("2塁打", batter)
-                    return "2塁打", round(final_hit_prob, 3), direction
-                else:
-                    direction = Game.decide_hit_direction("ヒット", batter)
-                    return "ヒット", round(final_hit_prob, 3), direction
-
+                direction = Game.decide_hit_direction("ヒット", batter)
+                return "ヒット", round(final_hit_prob, 3), direction
+        else:
+            r3 = random.random()
+            if r3 < double_play_chance:
+                return "併打", round(final_hit_prob, 3), ""
+            elif r3 < double_play_chance + ground_out_chance:
+                direction = Game.decide_hit_direction("ゴロ", batter)
+                return "ゴロ", round(final_hit_prob, 3), direction
+            elif r3 < double_play_chance + ground_out_chance + fly_out_chance:
+                direction = Game.decide_hit_direction("飛", batter)
+                return "飛", round(final_hit_prob, 3), direction
             else:
-                # 併殺可能かどうかチェック（1塁にランナー、かつ2アウト未満）
-                is_double_play_possible = self.current_outs < 2 and self.current_bases[0]
-                double_play_chance = 0.03 if speed < 50 and is_double_play_possible else 0.0
+                direction = Game.decide_hit_direction("直", batter)
+                return "直", round(final_hit_prob, 3), direction
 
-                r3 = random.random()
-                if r3 < double_play_chance:
-                    return "併打", round(final_hit_prob, 3), ""
-                elif r3 < double_play_chance + ground_out_chance:
-                    direction = Game.decide_hit_direction("ゴロ", batter)
-                    return "ゴロ", round(final_hit_prob, 3), direction
-                elif r3 < double_play_chance + ground_out_chance + fly_out_chance:
-                    direction = Game.decide_hit_direction("飛", batter)
-                    return "飛", round(final_hit_prob, 3), direction
-                else:
-                    direction = Game.decide_hit_direction("直", batter)
-                    return "直", round(final_hit_prob, 3), direction
 
 
 
