@@ -65,7 +65,7 @@ class Game:
     def simulate_half_inning_with_log(self, offense_team: Team, defense_team: Team):
         score = 0
         outs = 0
-        bases = [False, False, False]  # 1塁、2塁、3塁
+        bases = [False, False, False]  # 1塁, 2塁, 3塁
 
         if offense_team == self.team_home:
             batter_index = self.batter_index_home
@@ -84,44 +84,77 @@ class Game:
             result, hit_prob = self.at_bat_result(batter, pitcher, defense_team)
             log_line = f"{batter.name} の打席結果：{result}（hit_prob: {hit_prob}）"
 
-            # 塁・得点処理
-            if result == "アウト":
+            if result in ["三振", "ゴロ", "飛", "直"]:
                 outs += 1
 
-            elif result == "ヒット":
-                # 3塁ランナー生還
-                if bases[2]:
-                    score += 1
-                    log_line += " → 3塁ランナー生還"
-                # 2→3, 1→2
-                bases[2] = bases[1]
-                bases[1] = bases[0]
-                bases[0] = True  # 打者が1塁へ
+            elif result in ["ヒット", "2塁打", "3塁打"]:
+                runs = 0
 
-            elif result == "長打":
-                # 3塁, 2塁ランナー生還
-                if bases[2]:
-                    score += 1
-                    log_line += " → 3塁ランナー生還"
-                if bases[1]:
-                    score += 1
-                    log_line += " → 2塁ランナー生還"
-                # 1塁ランナー→3塁へ（進塁）
-                bases[2] = bases[0]
-                bases[1] = False
-                bases[0] = False
-                # 打者は2塁へ（ただし記録はしない）
+                if result == "ヒット":
+                    if bases[2]:
+                        runs += 1
+                    bases[2] = bases[1]
+                    bases[1] = bases[0]
+                    bases[0] = True
 
-            elif result == "ホームラン":
+                elif result == "2塁打":
+                    if bases[2]:
+                        runs += 1
+                    if bases[1]:
+                        runs += 1
+                    if bases[0]:
+                        bases[2] = True
+                    else:
+                        bases[2] = False
+                    bases[1] = True
+                    bases[0] = False
+
+                elif result == "3塁打":
+                    runs += sum(bases)
+                    bases = [False, False, True]
+
+                score += runs
+                if runs > 0:
+                    log_line += f" → {runs} 点"
+
+            elif result == "本塁打":
                 runs = 1 + sum(bases)
                 score += runs
                 bases = [False, False, False]
                 log_line += f" → ホームランで {runs} 点"
 
-            self.log.append(log_line)
-            batter_index += 1
+            elif result in ["四球", "死球"]:
+                # 押し出し処理
+                if all(bases):  # 満塁
+                    score += 1
+                    log_line += " → 押し出しで1点"
+                # シンプルな進塁（1→2→3）
+                if bases[2] and bases[1] and not bases[0]:
+                    bases[0] = True
+                else:
+                    for i in reversed(range(1, 3)):
+                        bases[i] = bases[i - 1]
+                    bases[0] = True
 
-        # 打順継続のために保存
+            elif result == "犠打":
+                if bases[0] and outs < 2:
+                    bases[1] = True
+                outs += 1
+
+            elif result == "犠飛":
+                if bases[2] and outs < 2:
+                    score += 1
+                    bases[2] = False
+                    log_line += " → 犠飛で1点"
+                outs += 1
+
+            elif result == "併打":
+                outs += 2
+                bases[0] = False  # ランナー封殺
+
+            batter_index += 1
+            self.log.append(log_line)
+
         if offense_team == self.team_home:
             self.batter_index_home = batter_index % len(batters)
         else:
@@ -131,52 +164,98 @@ class Game:
         return score
 
     def at_bat_result(self, batter: Player, pitcher: Player, defense_team: Team):
-        # 守備スコア
+        r = random.random()
+
+        # パラメータ
+        contact = batter.contact
+        power = batter.power
+        speed = batter.speed
+        trajectory = getattr(batter, 'trajectory', 2)
+
+        control = pitcher.control
+        breaking = pitcher.breaking_ball
+        velocity = pitcher.pitch_speed
+
         defenders = list(defense_team.defense_positions.values())
-        defense_score = sum(p.defense for p in defenders) / len(defenders) if defenders else 50
+        defense = sum(p.defense for p in defenders) / len(defenders) if defenders else 50
 
-        # ヒット確率の構成要素
-        base_hit_prob = 0.002 * batter.contact + 0.17
-        breaking_penalty = (pitcher.breaking_ball - 6) * 0.01
-        speed_penalty = abs(pitcher.pitch_speed - 145) * 0.002
-        defense_penalty = (defense_score - 50) * 0.002
-        random_factor = random.uniform(-0.05, 0.05)
+        # ---- 各要素の確率設計 ----
+        # デッドボール（死球）：制球が低いと上昇
+        hbp_chance = max(0.01, 0.06 - control * 0.001)
 
-        final_hit_prob = base_hit_prob - breaking_penalty - speed_penalty - defense_penalty + random_factor
-        final_hit_prob = max(0.0, min(final_hit_prob, 1.0))  # 0.0〜1.0に制限
+        # 四球：制球が低い＋パワー打者は警戒されて上昇
+        bb_chance = max(0.01, 0.05 + (100 - control) * 0.002 + power * 0.001)
 
-        # ヒットするかを確率で抽選
+        # 三振：ミート低い + 制球高いと上昇
+        so_chance = max(0.05, 0.10 + (100 - contact) * 0.001 + control * 0.001)
+
+        # 犠打・犠飛（今は実際には進塁しないが打撃結果として含む）
+        sac_bunt_chance = 0.02 if speed > 70 else 0.005
+        sac_fly_chance = 0.015 + trajectory * 0.005
+
+        # 単打〜HR：ベース確率
+        base_hit_prob = 0.002 * contact + 0.17
+        breaking_penalty = (breaking - 6) * 0.01
+        speed_penalty = abs(velocity - 145) * 0.002
+        defense_penalty = (defense - 50) * 0.002
+        hit_random = random.uniform(-0.05, 0.05)
+
+        final_hit_prob = base_hit_prob - breaking_penalty - speed_penalty - defense_penalty + hit_random
+        final_hit_prob = max(0.0, min(final_hit_prob, 1.0))
+
+        # 長打・HR内訳
+        long_hit_chance = 0.1 + (power - 50) * 0.005 + (trajectory - 2) * 0.02
+        triple_chance = 0.02 + speed * 0.001
+        home_run_chance = 0.05 + (power - 80) * 0.01 + (trajectory - 2) * 0.015
+
+        # ゴロ・フライ・ライナー
+        ground_out_chance = 0.15 + (3 - trajectory) * 0.03
+        fly_out_chance = 0.1 + trajectory * 0.02
+        line_out_chance = 0.05 + (contact / 100) * 0.05
+
+        # 併殺（2塁に走者がいれば別途扱う前提）
+        double_play_chance = 0.03 if speed < 50 else 0.01
+
+        # ---- 抽選処理 ----
+        p = random.random()
+        if p < hbp_chance:
+            return "死球", round(final_hit_prob, 3)
+        p -= hbp_chance
+        if p < bb_chance:
+            return "四球", round(final_hit_prob, 3)
+        p -= bb_chance
+        if p < so_chance:
+            return "三振", round(final_hit_prob, 3)
+        p -= so_chance
+        if p < sac_bunt_chance:
+            return "犠打", round(final_hit_prob, 3)
+        p -= sac_bunt_chance
+        if p < sac_fly_chance:
+            return "犠飛", round(final_hit_prob, 3)
+        p -= sac_fly_chance
+
+        # ヒット系抽選
         if random.random() < final_hit_prob:
-            # ヒットした場合：長打 or ホームランを再抽選
-            power = batter.power
-
-            long_hit_chance = 0.1 + (power - 50) * 0.005  # パワー50で10%、パワー70で20%
-            home_run_chance = 0.05 + (power - 80) * 0.01  # パワー80で5%、パワー90で15%
-
-            # 弾道による補正（trajectory: 1〜4）
-            trajectory = getattr(batter, 'trajectory', 2)  # 無ければ2
-
-            trajectory_bonus_hr = (trajectory - 2) * 0.015  # 弾道3で+0.015、4で+0.03
-            trajectory_bonus_ld = (trajectory - 2) * 0.02   # 弾道3で+0.02、4で+0.04
-
-            home_run_chance += trajectory_bonus_hr
-            long_hit_chance += trajectory_bonus_ld
-            
-            long_hit_chance = max(0.0, min(long_hit_chance, 1.0))
-            home_run_chance = max(0.0, min(home_run_chance, 1.0))
-
-            r = random.random()
-            if r < home_run_chance:
-                result = "ホームラン"
-            elif r < home_run_chance + long_hit_chance:
-                result = "長打"
+            r2 = random.random()
+            if r2 < home_run_chance:
+                return "本塁打", round(final_hit_prob, 3)
+            elif r2 < home_run_chance + triple_chance:
+                return "3塁打", round(final_hit_prob, 3)
+            elif r2 < home_run_chance + triple_chance + long_hit_chance:
+                return "2塁打", round(final_hit_prob, 3)
             else:
-                result = "ヒット"
+                return "ヒット", round(final_hit_prob, 3)
         else:
-            result = "アウト"
-
-        return result, round(final_hit_prob, 3)
-
+            # アウト系抽選
+            r3 = random.random()
+            if r3 < double_play_chance:
+                return "併打", round(final_hit_prob, 3)
+            elif r3 < double_play_chance + ground_out_chance:
+                return "ゴロ", round(final_hit_prob, 3)
+            elif r3 < double_play_chance + ground_out_chance + fly_out_chance:
+                return "飛", round(final_hit_prob, 3)
+            else:
+                return "直", round(final_hit_prob, 3)
 
     def get_winner(self):
         if self.score_home > self.score_away:
