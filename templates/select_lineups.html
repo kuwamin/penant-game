@@ -1,0 +1,17 @@
+<h1>スタメン選択</h1>
+<form method="POST">
+    <h2>あなたのチーム（9人選択）</h2>
+    {% for player in players %}
+        <input type="checkbox" name="teamA_ids" value="{{ player.id }}"> {{ player.name }}<br>
+    {% endfor %}
+
+    <h2>相手チーム（9人選択）</h2>
+    {% for player in players %}
+        <input type="checkbox" name="teamB_ids" value="{{ player.id }}"> {{ player.name }}<br>
+    {% endfor %}
+
+    <input type="submit" value="試合開始">
+</form>
+{% if error %}
+    <p style="color:red">{{ error }}</p>
+{% endif %}

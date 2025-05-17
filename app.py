@@ -128,6 +128,77 @@ def select_starters():
     players = PlayerModel.query.all()
     return render_template("select_starters.html", players=players)
 
+@app.route('/select_lineups', methods=['GET', 'POST'])
+def select_lineups():
+    all_players = PlayerModel.query.all()
+    if request.method == 'POST':
+        teamA_ids = request.form.getlist('teamA_ids')
+        teamB_ids = request.form.getlist('teamB_ids')
+
+        if len(teamA_ids) != 9 or len(teamB_ids) != 9:
+            error = "両チームとも9人ちょうど選んでください。"
+            return render_template('select_lineups.html', players=all_players, error=error)
+
+        return redirect(url_for('simulate_with_ids', teamA_ids=','.join(teamA_ids), teamB_ids=','.join(teamB_ids)))
+
+    return render_template('select_lineups.html', players=all_players)
+
+@app.route('/simulate_with_ids')
+def simulate_with_ids():
+    teamA_ids = request.args.get('teamA_ids', '').split(',')
+    teamB_ids = request.args.get('teamB_ids', '').split(',')
+
+    selected_players_A = {str(p.id): p for p in PlayerModel.query.filter(PlayerModel.id.in_(teamA_ids)).all()}
+    ordered_players_A = [selected_players_A[pid] for pid in teamA_ids]
+
+    selected_players_B = {str(p.id): p for p in PlayerModel.query.filter(PlayerModel.id.in_(teamB_ids)).all()}
+    ordered_players_B = [selected_players_B[pid] for pid in teamB_ids]
+
+    # チーム構築（仮想投手を1人ずつ）
+    teamA = Team("あなたのチーム")
+    pitcherA = Player("マイチームエース", "投手", is_pitcher=True, stats={
+        "pitch_speed": 145, "control": 70, "stamina": 75, "breaking_ball": 7
+    })
+    teamA.add_player(pitcherA)
+    for p in ordered_players_A:
+        teamA.add_player(Player(name=p.name, position="野手", is_pitcher=False, stats={
+            "contact": p.contact, "power": p.power, "speed": p.speed,
+            "arm": p.arm, "defense": p.defense, "catch": p.catch
+        }))
+    teamA.set_lineup_and_defense(teamA.players[1:], dh_player=teamA.players[-1])
+
+    teamB = Team("相手チーム")
+    pitcherB = Player("相手投手", "投手", is_pitcher=True, stats={
+        "pitch_speed": 150, "control": 60, "stamina": 70, "breaking_ball": 6
+    })
+    teamB.add_player(pitcherB)
+    for p in ordered_players_B:
+        teamB.add_player(Player(name=p.name, position="野手", is_pitcher=False, stats={
+            "contact": p.contact, "power": p.power, "speed": p.speed,
+            "arm": p.arm, "defense": p.defense, "catch": p.catch
+        }))
+    teamB.set_lineup_and_defense(teamB.players[1:], dh_player=teamB.players[-1])
+
+    # 試合開始
+    game = Game(team_home=teamA, team_away=teamB)
+    game.play_game()
+
+    result = {
+        "teamA": teamA.name,
+        "teamB": teamB.name,
+        "scoreA": game.score_home,
+        "scoreB": game.score_away,
+        "log": game.log,
+        "inning_scores_home": game.inning_scores_home,
+        "inning_scores_away": game.inning_scores_away,
+        "hits_home": game.hits_home,
+        "hits_away": game.hits_away,
+        "errors_home": 0,
+        "errors_away": 0
+    }
+
+    return render_template("result.html", result=result)
+
 @app.route('/simulate', methods=['POST'])
 def simulate():
     ids = request.form.getlist("starter_ids")
