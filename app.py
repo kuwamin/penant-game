@@ -104,7 +104,7 @@ def simulate():
         teamA.add_player(player)
 
     dh_player = teamA.players[-1]
-    teamA.set_lineup_and_defense(teamA.players, dh_player=dh_player)
+    teamA.set_lineup_and_defense(teamA.players[1:], dh_player=dh_player)
 
     # 相手COMチーム生成（今まで通り）
     teamB = Team("COMチーム")
