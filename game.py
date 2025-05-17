@@ -89,20 +89,16 @@ class Game:
             base_display = "".join([str(i + 1) for i, b in enumerate(bases) if b]) or "なし"
             situation = f"【{outs}アウト {base_display}塁】"
 
-            result, hit_prob = self.at_bat_result(batter, pitcher, defense_team)
-
-            # 元の打撃結果を保持しておく
-            original_result = result
+            result, hit_prob, direction = self.at_bat_result(batter, pitcher, defense_team)
 
             # 表示用に打球方向を取得（ログだけに使う）
-            direction = ""
             if result in ["ゴロ", "飛", "直", "ヒット", "2塁打", "3塁打", "本塁打"]:
                 direction = Game.decide_hit_direction(result, batter)
 
             log_line = f"{situation}{batter.name} の打席結果：{direction}{result}（hit_prob: {hit_prob}）"
 
-            # ★ 判定は direction を含めない original_result で行う
-            if original_result in ["三振", "ゴロ", "飛", "直", "フライアウト"]:
+            # アウトカウントの判定は direction 抜きで行えるようになる
+            if result in ["三振", "ゴロ", "飛", "直", "フライアウト"]:
                 outs += 1
                 self.current_outs = outs
                 batter_index += 1
@@ -283,16 +279,17 @@ class Game:
 
                 r3 = random.random()
                 if r3 < double_play_chance:
-                    return "併打", round(final_hit_prob, 3)
+                    return "併打", round(final_hit_prob, 3), ""
                 elif r3 < double_play_chance + ground_out_chance:
                     direction = Game.decide_hit_direction("ゴロ", batter)
-                    return f"{direction}ゴロ", round(final_hit_prob, 3)
+                    return "ゴロ", round(final_hit_prob, 3), direction
                 elif r3 < double_play_chance + ground_out_chance + fly_out_chance:
                     direction = Game.decide_hit_direction("飛", batter)
-                    return f"{direction}飛", round(final_hit_prob, 3)
+                    return "飛", round(final_hit_prob, 3), direction
                 else:
                     direction = Game.decide_hit_direction("直", batter)
-                    return f"{direction}直", round(final_hit_prob, 3)
+                    return "直", round(final_hit_prob, 3), direction
+
 
 
 
