@@ -103,6 +103,7 @@ def select_starters():
 def select_lineups():
     all_players = PlayerModel.query.all()
     pitchers = PlayerModel.query.filter_by(is_pitcher=True).all()
+
     if request.method == 'POST':
         teamA_ids = request.form.getlist('teamA_ids')
         teamB_ids = request.form.getlist('teamB_ids')
@@ -111,7 +112,6 @@ def select_lineups():
 
         if len(teamA_ids) != 9 or len(teamB_ids) != 9 or not pitcherA_id or not pitcherB_id:
             error = "両チームとも9人、かつ投手を1人ずつ選んでください。"
-            pitchers = PlayerModel.query.filter_by(is_pitcher=True).all()
             return render_template('select_lineups.html', players=all_players, pitchers=pitchers, error=error)
 
         return redirect(url_for(
@@ -122,9 +122,8 @@ def select_lineups():
             pitcherB_id=pitcherB_id
         ))
 
-
-
-    return render_template('select_lineups.html', players=all_players)
+    # ✅ GETのときにも pitchers を渡す！
+    return render_template('select_lineups.html', players=all_players, pitchers=pitchers)
 
 
 @app.route('/simulate_with_ids')
