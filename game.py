@@ -13,6 +13,9 @@ class Game:
         self.inning_scores_away = []  # 各回の得点（アウェイ）
         self.hits_home = 0            # ヒット数（仮）
         self.hits_away = 0
+        self.batter_index_home = 0
+        self.batter_index_away = 0
+
 
 
     def play_game(self):
@@ -62,10 +65,16 @@ class Game:
     def simulate_half_inning_with_log(self, offense_team: Team, defense_team: Team):
         score = 0
         outs = 0
-        batter_index = 0
+
+        # 打順の基準となるバッターインデックスをチームごとに選ぶ
+        if offense_team == self.team_home:
+            batter_index = self.batter_index_home
+        else:
+            batter_index = self.batter_index_away
 
         pitcher = next((p for p in defense_team.players if p.is_pitcher), None)
         batters = offense_team.starters
+
         while outs < 3:
             batter = batters[batter_index % len(batters)]
             if batter.is_pitcher:
@@ -82,8 +91,15 @@ class Game:
 
             batter_index += 1
 
+        # 次のイニングのために現在のバッター位置を保存
+        if offense_team == self.team_home:
+            self.batter_index_home = batter_index % len(batters)
+        else:
+            self.batter_index_away = batter_index % len(batters)
+
         self.log.append(f"{offense_team.name} の得点：{score}点")
         return score
+
 
 
     def at_bat_result(self, batter: Player, pitcher: Player, defense_team: Team):
