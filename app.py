@@ -351,8 +351,18 @@ def simulate_season():
 
     for _ in range(143):
         # インスタンス化
-        pitcherA = Player(name=pitcherA_model.name, position="投手", is_pitcher=True, stats={...})
-        pitcherB = Player(name=pitcherB_model.name, position="投手", is_pitcher=True, stats={...})
+        pitcherA = Player(name=pitcherA_model.name, position="投手", is_pitcher=True, stats={
+    "pitch_speed": pitcherA_model.pitch_speed,
+    "control": pitcherA_model.control,
+    "stamina": pitcherA_model.stamina,
+    "breaking_ball": pitcherA_model.breaking_ball
+        })
+        pitcherB = Player(name=pitcherB_model.name, position="投手", is_pitcher=True, stats={
+    "pitch_speed": pitcherB_model.pitch_speed,
+    "control": pitcherB_model.control,
+    "stamina": pitcherB_model.stamina,
+    "breaking_ball": pitcherB_model.breaking_ball
+        })
 
         teamA = Team("中村チーム")
         teamA.add_player(pitcherA)
