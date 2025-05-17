@@ -287,9 +287,9 @@ def register_pitcher():
 
         existing = PlayerModel.query.filter_by(name=name).first()
         if existing:
-            return render_template("pitcher_register.html", message=f"{name} はすでに登録されています。")
+            return render_template("register_pitcher.html", message=f"{name} はすでに登録されています。")
 
-        pitcher = PlayerModel(
+        player = PlayerModel(
             name=name,
             is_pitcher=True,
             pitch_speed=pitch_speed,
@@ -297,11 +297,11 @@ def register_pitcher():
             stamina=stamina,
             breaking_ball=breaking_ball
         )
-        db.session.add(pitcher)
+        db.session.add(player)
         db.session.commit()
-        return render_template("pitcher_register.html", message=f"{name} を投手として登録しました！")
+        return render_template("register_pitcher.html", message=f"{name} を投手として登録しました！")
 
-    return render_template("pitcher_register.html")
+    return render_template("register_pitcher.html")
 
 
 if __name__ == '__main__':

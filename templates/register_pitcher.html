@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>投手登録</title>
+</head>
+<body>
+    <h1>投手登録フォーム</h1>
+    <form method="POST">
+        <label>名前: <input type="text" name="name" required></label><br><br>
+        <label>球速（km/h）: <input type="number" name="pitch_speed" value="145" required></label><br><br>
+        <label>コントロール: <input type="number" name="control" value="50" required></label><br><br>
+        <label>スタミナ: <input type="number" name="stamina" value="50" required></label><br><br>
+        <label>変化球: <input type="number" name="breaking_ball" value="7" required></label><br><br>
+        <button type="submit">登録</button>
+    </form>
+
+    {% if message %}
+        <p style="color:green">{{ message }}</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('index') }}">ホームに戻る</a></p>
+</body>
+</html>
