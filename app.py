@@ -28,42 +28,41 @@ def generate_random_stats():
 def index():
     return render_template('index.html')
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
+@app.route('/register_pitcher', methods=['GET', 'POST'])
+def register_pitcher():
     if request.method == 'POST':
         name = request.form.get('name')
-        contact = int(request.form.get('contact'))
-        power = int(request.form.get('power'))
-        speed = int(request.form.get('speed'))
-        arm = int(request.form.get('arm'))
-        defense = int(request.form.get('defense'))
-        catch = int(request.form.get('catch'))
+        pitch_speed = int(request.form.get('pitch_speed'))
+        control = int(request.form.get('control'))
+        stamina = int(request.form.get('stamina'))
+        breaking_ball = int(request.form.get('breaking_ball'))
 
         existing = PlayerModel.query.filter_by(name=name).first()
         if existing:
-            return render_template("register.html", message=f"{name} はすでに登録されています。")
+            return render_template("register_pitcher.html", message=f"{name} はすでに登録されています。")
 
         player = PlayerModel(
             name=name,
             trajectory=2,
-            contact=contact,
-            power=power,
-            speed=speed,
-            arm=arm,
-            defense=defense,
-            catch=catch,
-            is_pitcher=False,
-            pitch_speed=0,
-            control=0,
-            stamina=0,
-            breaking_ball=0
+            contact=0,
+            power=0,
+            speed=0,
+            arm=0,
+            defense=0,
+            catch=0,
+            is_pitcher=True,
+            pitch_speed=pitch_speed,
+            control=control,
+            stamina=stamina,
+            breaking_ball=breaking_ball
         )
 
         db.session.add(player)
         db.session.commit()
-        return render_template("register.html", message=f"{name} を登録しました！")
+        return render_template("register_pitcher.html", message=f"{name} を登録しました！")
 
-    return render_template("register.html")
+    return render_template("register_pitcher.html")
+
 
 
 @app.route('/players')
