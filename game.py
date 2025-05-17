@@ -93,11 +93,24 @@ class Game:
                 self.log.append(log_line)
                 continue
 
-            elif result == "死球" or result == "四球":
-                if all(bases):
+            elif result == "四球" or result == "死球":
+                if all(bases):  # 押し出し
                     score += 1
                     log_line += " → 押し出しで1点"
-                bases = [True] + bases[:2]
+                # 後方から順に進塁させる
+                if bases[2]:
+                    score += 1
+                    log_line += " → 3塁ランナー生還"
+                if bases[1]:
+                    bases[2] = True
+                else:
+                    bases[2] = False
+                if bases[0]:
+                    bases[1] = True
+                else:
+                    bases[1] = False
+                bases[0] = True  # 打者が1塁へ
+
 
             elif result == "ヒット":
                 if bases[2]:
