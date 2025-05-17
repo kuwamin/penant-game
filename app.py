@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import request, redirect, url_for, render_template
 from models import PlayerModel
 from db import db
 from game import Game

@@ -103,20 +103,32 @@ class Game:
 
 
     def at_bat_result(self, batter: Player, pitcher: Player, defense_team: Team):
-        hit_chance = batter.contact - pitcher.control + random.randint(-10, 10)
-        power = batter.power
-
+        # 守備力
         defenders = list(defense_team.defense_positions.values())
-        if defenders:
-            defense_score = sum(p.defense for p in defenders) / len(defenders)
-            hit_chance -= int(defense_score * 0.1)
+        defense_score = sum(p.defense for p in defenders) / len(defenders) if defenders else 50
 
-        if hit_chance > 60:
-            return "ホームラン" if power > 90 else "長打"
-        elif hit_chance > 40:
+        # ベース打率（ミート基準）
+        base_hit_prob = 0.0016 * batter.contact + 0.132
+
+        # 補正要素
+        breaking_penalty = (pitcher.breaking_ball - 6) * 0.01
+        speed_penalty = abs(pitcher.pitch_speed - 145) * 0.002
+        defense_penalty = (defense_score - 50) * 0.002
+        random_factor = random.uniform(-0.05, 0.05)
+
+        # 最終ヒット確率
+        final_hit_prob = base_hit_prob - breaking_penalty - speed_penalty - defense_penalty + random_factor
+
+        # 結果判定
+        if final_hit_prob > 0.9:
+            return "ホームラン"
+        elif final_hit_prob > 0.6:
+            return "長打"
+        elif final_hit_prob > 0.3:
             return "ヒット"
         else:
             return "アウト"
+
 
     def get_winner(self):
         if self.score_home > self.score_away:
