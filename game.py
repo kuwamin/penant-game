@@ -262,16 +262,17 @@ class Game:
                 r2 = random.random()
                 if r2 < home_run_chance:
                     direction = Game.decide_hit_direction("本塁打", batter)
-                    return f"{direction}本塁打", round(final_hit_prob, 3)
+                    return "本塁打", round(final_hit_prob, 3), direction
                 elif r2 < home_run_chance + triple_chance:
                     direction = Game.decide_hit_direction("3塁打", batter)
-                    return f"{direction}3塁打", round(final_hit_prob, 3)
+                    return "3塁打", round(final_hit_prob, 3), direction
                 elif r2 < home_run_chance + triple_chance + long_hit_chance:
                     direction = Game.decide_hit_direction("2塁打", batter)
-                    return f"{direction}2塁打", round(final_hit_prob, 3)
+                    return "2塁打", round(final_hit_prob, 3), direction
                 else:
                     direction = Game.decide_hit_direction("ヒット", batter)
-                    return f"{direction}ヒット", round(final_hit_prob, 3)
+                    return "ヒット", round(final_hit_prob, 3), direction
+
             else:
                 # 併殺可能かどうかチェック（1塁にランナー、かつ2アウト未満）
                 is_double_play_possible = self.current_outs < 2 and self.current_bases[0]
