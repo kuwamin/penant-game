@@ -148,17 +148,11 @@ def simulate_with_ids():
     teamA_ids = request.args.get('teamA_ids', '').split(',')
     teamB_ids = request.args.get('teamB_ids', '').split(',')
 
+    # Team A
     selected_players_A = {str(p.id): p for p in PlayerModel.query.filter(PlayerModel.id.in_(teamA_ids)).all()}
     ordered_players_A = [selected_players_A[pid] for pid in teamA_ids]
-
-    selected_players_B = {str(p.id): p for p in PlayerModel.query.filter(PlayerModel.id.in_(teamB_ids)).all()}
-    ordered_players_B = [selected_players_B[pid] for pid in teamB_ids]
-
-    # チーム構築（仮想投手を1人ずつ）
     teamA = Team("あなたのチーム")
-    pitcherA = Player("マイチームエース", "投手", is_pitcher=True, stats={
-        "pitch_speed": 145, "control": 70, "stamina": 75, "breaking_ball": 7
-    })
+    pitcherA = Player("マイチームエース", "投手", is_pitcher=True, stats={"pitch_speed": 145, "control": 70, "stamina": 75, "breaking_ball": 7})
     teamA.add_player(pitcherA)
     for p in ordered_players_A:
         teamA.add_player(Player(name=p.name, position="野手", is_pitcher=False, stats={
@@ -167,10 +161,11 @@ def simulate_with_ids():
         }))
     teamA.set_lineup_and_defense(teamA.players[1:], dh_player=teamA.players[-1])
 
+    # Team B
+    selected_players_B = {str(p.id): p for p in PlayerModel.query.filter(PlayerModel.id.in_(teamB_ids)).all()}
+    ordered_players_B = [selected_players_B[pid] for pid in teamB_ids]
     teamB = Team("相手チーム")
-    pitcherB = Player("相手投手", "投手", is_pitcher=True, stats={
-        "pitch_speed": 150, "control": 60, "stamina": 70, "breaking_ball": 6
-    })
+    pitcherB = Player("相手エース", "投手", is_pitcher=True, stats={"pitch_speed": 150, "control": 60, "stamina": 70, "breaking_ball": 6})
     teamB.add_player(pitcherB)
     for p in ordered_players_B:
         teamB.add_player(Player(name=p.name, position="野手", is_pitcher=False, stats={
@@ -179,7 +174,7 @@ def simulate_with_ids():
         }))
     teamB.set_lineup_and_defense(teamB.players[1:], dh_player=teamB.players[-1])
 
-    # 試合開始
+    # Play game
     game = Game(team_home=teamA, team_away=teamB)
     game.play_game()
 
@@ -196,7 +191,6 @@ def simulate_with_ids():
         "errors_home": 0,
         "errors_away": 0
     }
-
     return render_template("result.html", result=result)
 
 @app.route('/simulate', methods=['POST'])
