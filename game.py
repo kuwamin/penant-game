@@ -223,14 +223,17 @@ class Game:
         sac_fly_chance = 0.015 + trajectory * 0.005
 
         # ヒット確率計算
+        # ヒット確率計算（改良版）
         base_hit_prob = 0.002 * contact + 0.17
-        breaking_penalty = (breaking - 6) * 0.01
-        speed_penalty = abs(velocity - 145) * 0.002
+        breaking_penalty = (breaking - 7) * 0.012
+        speed_penalty = (145 - velocity) * 0.0047
+        control_penalty = (50 - control) * 0.0023
         defense_penalty = (defense - 50) * 0.002
-        hit_random = random.uniform(-0.05, 0.05)
+        hit_random = random.uniform(-0.03, 0.03)
 
-        final_hit_prob = base_hit_prob - breaking_penalty - speed_penalty - defense_penalty + hit_random
+        final_hit_prob = base_hit_prob - breaking_penalty - speed_penalty - control_penalty - defense_penalty + hit_random
         final_hit_prob = max(0.0, min(final_hit_prob, 1.0))
+
 
         # ヒットの中身の配分（調整）
         long_hit_chance = 0.12 + (power - 50) * 0.005 + (trajectory - 2) * 0.02
