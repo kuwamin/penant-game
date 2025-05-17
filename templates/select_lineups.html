@@ -40,7 +40,10 @@
             {% endfor %}
         </select>
 
-        <p><button type="submit">試合開始</button></p>
+        <p>
+            <button type="submit" name="mode" value="1">1試合だけ行う</button>
+            <button type="submit" name="mode" value="143">143試合シミュレーション</button>
+        </p>
     </form>
 
     <p><a href="{{ url_for('index') }}">ホームへ戻る</a></p>

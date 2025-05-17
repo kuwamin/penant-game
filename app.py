@@ -104,26 +104,34 @@ def select_starters():
 def select_lineups():
     all_players = PlayerModel.query.all()
     pitchers = PlayerModel.query.filter_by(is_pitcher=True).all()
-
     if request.method == 'POST':
         teamA_ids = request.form.getlist('teamA_ids')
         teamB_ids = request.form.getlist('teamB_ids')
         pitcherA_id = request.form.get('pitcherA_id')
         pitcherB_id = request.form.get('pitcherB_id')
+        mode = request.form.get('mode')  # ← 試合数モード
 
         if len(teamA_ids) != 9 or len(teamB_ids) != 9 or not pitcherA_id or not pitcherB_id:
             error = "両チームとも9人、かつ投手を1人ずつ選んでください。"
             return render_template('select_lineups.html', players=all_players, pitchers=pitchers, error=error)
 
-        return redirect(url_for(
-            'simulate_with_ids',
-            teamA_ids=','.join(teamA_ids),
-            teamB_ids=','.join(teamB_ids),
-            pitcherA_id=pitcherA_id,
-            pitcherB_id=pitcherB_id
-        ))
+        if mode == "1":
+            return redirect(url_for(
+                'simulate_with_ids',
+                teamA_ids=','.join(teamA_ids),
+                teamB_ids=','.join(teamB_ids),
+                pitcherA_id=pitcherA_id,
+                pitcherB_id=pitcherB_id
+            ))
+        elif mode == "143":
+            return redirect(url_for(
+                'simulate_season_with_ids',
+                teamA_ids=','.join(teamA_ids),
+                teamB_ids=','.join(teamB_ids),
+                pitcherA_id=pitcherA_id,
+                pitcherB_id=pitcherB_id
+            ))
 
-    # ✅ GETのときにも pitchers を渡す！
     return render_template('select_lineups.html', players=all_players, pitchers=pitchers)
 
 
@@ -447,6 +455,89 @@ def simulate_season():
 
     db.session.commit()
     return "143試合を完了し、成績を保存しました！"
+
+
+@app.route('/simulate_season_with_ids')
+def simulate_season_with_ids():
+    from game import Game
+    from player import Player
+    from team import Team
+
+    teamA_ids = request.args.get('teamA_ids', '').split(',')
+    teamB_ids = request.args.get('teamB_ids', '').split(',')
+    pitcherA_id = request.args.get('pitcherA_id')
+    pitcherB_id = request.args.get('pitcherB_id')
+
+    teamA_models = PlayerModel.query.filter(PlayerModel.id.in_(teamA_ids)).all()
+    teamB_models = PlayerModel.query.filter(PlayerModel.id.in_(teamB_ids)).all()
+    pitcherA_model = PlayerModel.query.get_or_404(pitcherA_id)
+    pitcherB_model = PlayerModel.query.get_or_404(pitcherB_id)
+
+    for _ in range(143):
+        pitcherA = Player(name=pitcherA_model.name, position="投手", is_pitcher=True, stats={
+            "pitch_speed": pitcherA_model.pitch_speed,
+            "control": pitcherA_model.control,
+            "stamina": pitcherA_model.stamina,
+            "breaking_ball": pitcherA_model.breaking_ball
+        })
+        pitcherB = Player(name=pitcherB_model.name, position="投手", is_pitcher=True, stats={
+            "pitch_speed": pitcherB_model.pitch_speed,
+            "control": pitcherB_model.control,
+            "stamina": pitcherB_model.stamina,
+            "breaking_ball": pitcherB_model.breaking_ball
+        })
+
+        teamA = Team("あなたのチーム")
+        teamA.add_player(pitcherA)
+        a_objs = []
+        for p in teamA_models:
+            player = Player(name=p.name, position="野手", is_pitcher=False, stats={
+                "contact": p.contact,
+                "power": p.power,
+                "speed": p.speed,
+                "arm": p.arm,
+                "defense": p.defense,
+                "catch": p.catch
+            })
+            player.id = p.id
+            teamA.add_player(player)
+            a_objs.append(player)
+        teamA.set_lineup_and_defense(a_objs, dh_player=a_objs[-1])
+
+        teamB = Team("相手チーム")
+        teamB.add_player(pitcherB)
+        b_objs = []
+        for p in teamB_models:
+            player = Player(name=p.name, position="野手", is_pitcher=False, stats={
+                "contact": p.contact,
+                "power": p.power,
+                "speed": p.speed,
+                "arm": p.arm,
+                "defense": p.defense,
+                "catch": p.catch
+            })
+            player.id = p.id
+            teamB.add_player(player)
+            b_objs.append(player)
+        teamB.set_lineup_and_defense(b_objs, dh_player=b_objs[-1])
+
+        game = Game(team_home=teamA, team_away=teamB)
+        game.play_game()
+
+        for p in a_objs + b_objs:
+            stat = SeasonStatModel.query.filter_by(player_id=p.id).first()
+            if not stat:
+                stat = SeasonStatModel(player_id=p.id)
+                db.session.add(stat)
+            stat.at_bats = (stat.at_bats or 0) + (getattr(p, "at_bats", 0) or 0)
+            stat.hits = (stat.hits or 0) + (getattr(p, "hits", 0) or 0)
+            stat.walks = (stat.walks or 0) + (getattr(p, "walks", 0) or 0)
+            stat.strikeouts = (stat.strikeouts or 0) + (getattr(p, "strikeouts", 0) or 0)
+            stat.home_runs = (stat.home_runs or 0) + (getattr(p, "home_runs", 0) or 0)
+
+    db.session.commit()
+    return "143試合を完了し、成績を保存しました！"
+
 
 if __name__ == '__main__':
     import os
