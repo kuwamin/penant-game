@@ -59,9 +59,16 @@ def register():
     return render_template("register.html")
 
 @app.route('/players')
-def players():
+def show_players():
     all_players = PlayerModel.query.all()
     return render_template("players.html", players=all_players)
+
+@app.route('/delete_player/<int:player_id>', methods=['POST'])
+def delete_player(player_id):
+    player = PlayerModel.query.get_or_404(player_id)
+    db.session.delete(player)
+    db.session.commit()
+    return redirect(url_for('show_players'))  # ※show_playersに変更済みならそれ
 
 @app.route('/select_starters', methods=['GET'])
 def select_starters():
