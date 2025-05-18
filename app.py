@@ -40,7 +40,7 @@ def delete_player(player_id):
     player = PlayerModel.query.get_or_404(player_id)
     db.session.delete(player)
     db.session.commit()
-    return redirect(url_for('show_players'))  # ※show_playersに変更済みならそれ
+    return redirect(url_for('show_players'))
     
 @app.route('/edit_player/<int:player_id>', methods=['GET', 'POST'])
 def edit_player(player_id):

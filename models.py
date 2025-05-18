@@ -21,7 +21,11 @@ class PlayerModel(db.Model):
 
 class SeasonStatModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    player_id = db.Column(db.Integer, db.ForeignKey('penant_players.id'), nullable=False)
+    player_id = db.Column(
+        db.Integer,
+        db.ForeignKey('penant_players.id', ondelete="CASCADE"),  # ★重要
+        nullable=False
+    )
     season = db.Column(db.Integer, default=2025)
 
     at_bats = db.Column(db.Integer, default=0)
@@ -30,4 +34,5 @@ class SeasonStatModel(db.Model):
     walks = db.Column(db.Integer, default=0)
     strikeouts = db.Column(db.Integer, default=0)
 
-    player = db.relationship('PlayerModel', backref='season_stats')
+    player = db.relationship('PlayerModel', backref=db.backref('season_stats', cascade='all, delete-orphan'))
+
