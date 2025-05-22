@@ -10,7 +10,7 @@ import random
 import os
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:password@penant-db-kuwamin.cvmemimsu60d.ap-southeast-2.rds.amazonaws.com:5432/penant-db-kuwamin"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:Kouchan2012@penant-db-kuwamin.cvmemimsu60d.ap-southeast-2.rds.amazonaws.com:5432/penant-db-kuwamin"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
